@@ -1,0 +1,629 @@
+Exercism C++ Learning Summary
+Exercises Covered: 001 - Hello World, 002 - Log Levels
+
+============================================================
+1. Exercise 001 - Hello World
+============================================================
+
+Main concepts learned:
+- Basic function structure in C++
+- Return types
+- Difference between returning a value and printing a value
+- std::string
+- #include <string>
+- void vs value-returning functions
+
+------------------------------------------------------------
+1.1 Function structure
+------------------------------------------------------------
+
+General C++ function shape:
+
+return_type function_name(parameter_list)
+{
+    return value;
+}
+
+Example:
+
+#include <string>
+
+std::string hello()
+{
+    return "Hello, World!";
+}
+
+Meaning:
+- std::string: the function returns text.
+- hello: the function name.
+- (): the function takes no parameters.
+- return "Hello, World!"; sends the text back to whoever called the function.
+
+------------------------------------------------------------
+1.2 std::string
+------------------------------------------------------------
+
+std::string means:
+- string is the text type.
+- std is the namespace where the standard library string type lives.
+- :: means "look inside this namespace/scope".
+
+So:
+
+std::string
+
+means:
+
+Use the string type from the std namespace.
+
+JavaScript comparison:
+- Math.random() means random belongs to Math.
+
+C++ comparison:
+- std::string means string belongs to std.
+
+------------------------------------------------------------
+1.3 return type as a promise
+------------------------------------------------------------
+
+A function return type is like a contract or promise.
+
+Example:
+
+int get_age()
+{
+    return 30;
+}
+
+Promise:
+- This function returns an integer.
+
+Example:
+
+std::string get_name()
+{
+    return "Cansoy";
+}
+
+Promise:
+- This function returns text.
+
+Wrong example:
+
+int get_name()
+{
+    return "Cansoy";
+}
+
+Why wrong:
+- The function promises to return int.
+- But it returns text.
+- Return type and returned value do not match.
+
+------------------------------------------------------------
+1.4 void functions
+------------------------------------------------------------
+
+void means:
+- The function does some work.
+- It does not return a value.
+
+Example:
+
+void print_message()
+{
+    std::cout << "System ready";
+}
+
+This is like a VBA Sub.
+
+VBA comparison:
+
+Sub PrintMessage()
+    MsgBox "System ready"
+End Sub
+
+A value-returning function is like a VBA Function:
+
+Function GetMessage() As String
+    GetMessage = "System ready"
+End Function
+
+C++ version:
+
+std::string get_message()
+{
+    return "System ready";
+}
+
+------------------------------------------------------------
+1.5 Function naming
+------------------------------------------------------------
+
+Good function names should describe what the function actually does.
+
+Examples:
+
+std::string get_message();
+- Good if the function returns a message.
+
+void print_message();
+- Good if the function prints a message.
+
+int calculate_total();
+- Good if the function calculates and returns a total.
+
+bool is_ready();
+- Good if the function returns true or false.
+
+Be careful:
+- get_ usually suggests returning a value.
+- print_ or show_ suggests displaying something.
+- calculate_ usually suggests computing and returning a value.
+
+============================================================
+2. Exercise 002 - Log Levels
+============================================================
+
+Main concepts learned:
+- std::string as a text object
+- string indexing
+- size() and length()
+- std::size_t
+- find()
+- substr()
+- string concatenation with +
+- reusable helper functions
+
+The log format:
+
+"[<LEVEL>]: <MESSAGE>"
+
+Examples:
+
+"[ERROR]: Invalid operation"
+"[WARNING]: Disk almost full"
+"[INFO]: Operation completed"
+
+Tasks:
+1. Extract the message.
+2. Extract the log level.
+3. Reformat as: message (LEVEL)
+
+------------------------------------------------------------
+2.1 String indexing
+------------------------------------------------------------
+
+C++ strings are zero-indexed.
+
+Example:
+
+std::string log{"[ERROR]: Disk almost full"};
+
+Index map:
+
+0  [
+1  E
+2  R
+3  R
+4  O
+5  R
+6  ]
+7  :
+8  space
+9  D
+
+Important:
+- C++ starts indexing at 0.
+- JavaScript also starts indexing at 0.
+- VBA Mid/InStr uses 1-based positions.
+
+------------------------------------------------------------
+2.2 size() and length()
+------------------------------------------------------------
+
+For std::string:
+
+log.size()
+log.length()
+
+Both return the number of characters.
+
+Most C++ developers often use size() because it is also used by many standard library containers such as std::vector.
+
+------------------------------------------------------------
+2.3 std::size_t
+------------------------------------------------------------
+
+std::string::find() returns std::size_t, not int.
+
+Good:
+
+std::size_t idx = log.find("]: ");
+
+Less ideal:
+
+int idx = log.find("]: ");
+
+Simple rule:
+- For string indexes and sizes, prefer std::size_t.
+
+------------------------------------------------------------
+2.4 find()
+------------------------------------------------------------
+
+find() searches for text inside a string and returns the position where it starts.
+
+Example:
+
+std::size_t idx = log.find("]: ");
+
+For:
+
+"[ERROR]: Disk almost full"
+
+idx is 6 because ] starts at index 6.
+
+For:
+
+"[WARNING]: Disk almost full"
+
+idx is 8 because ] starts at index 8.
+
+This is better than hard-coding index 9 because log levels can have different lengths.
+
+------------------------------------------------------------
+2.5 substr()
+------------------------------------------------------------
+
+Very important rule:
+
+log.substr(start, count)
+
+The second argument is count, not end index.
+
+Meaning:
+- Start from start.
+- Take count characters.
+
+Example:
+
+log.substr(1, idx - 1)
+
+For:
+
+"[ERROR]: Disk almost full"
+
+idx = 6
+idx - 1 = 5
+
+So:
+
+log.substr(1, 5)
+
+means:
+- Start at index 1.
+- Take 5 characters.
+- Result: "ERROR"
+
+Another version:
+
+log.substr(idx + 3)
+
+If the second argument is omitted, substr takes everything from that index to the end.
+
+For:
+
+"[ERROR]: Disk almost full"
+
+idx = 6
+idx + 3 = 9
+
+log.substr(9)
+
+Result:
+
+"Disk almost full"
+
+------------------------------------------------------------
+2.6 message() function
+------------------------------------------------------------
+
+Goal:
+- Return only the message part.
+
+Code:
+
+std::string message(std::string log)
+{
+    std::size_t idx = log.find("]: ");
+    return log.substr(idx + 3);
+}
+
+Explanation:
+- find("]: ") finds the separator.
+- idx points to ].
+- +3 skips ], :, and space.
+- substr(idx + 3) returns the message.
+
+Example:
+
+message("[ERROR]: Invalid operation")
+
+returns:
+
+"Invalid operation"
+
+------------------------------------------------------------
+2.7 log_level() function
+------------------------------------------------------------
+
+Goal:
+- Return only the log level without brackets.
+
+Code:
+
+std::string log_level(std::string log)
+{
+    std::size_t idx = log.find("]: ");
+    return log.substr(1, idx - 1);
+}
+
+Explanation:
+- index 0 is [.
+- log level starts at index 1.
+- idx is the position of ].
+- idx - 1 gives the number of characters inside the brackets.
+
+Example:
+
+log_level("[WARNING]: Disk almost full")
+
+returns:
+
+"WARNING"
+
+------------------------------------------------------------
+2.8 reformat() function
+------------------------------------------------------------
+
+Goal:
+- Return message first and log level after it in parentheses.
+
+Code:
+
+std::string reformat(std::string log)
+{
+    return message(log) + " (" + log_level(log) + ")";
+}
+
+Example:
+
+reformat("[INFO]: Operation completed")
+
+returns:
+
+"Operation completed (INFO)"
+
+------------------------------------------------------------
+2.9 String concatenation
+------------------------------------------------------------
+
+C++ strings can be combined with +.
+
+Example:
+
+message(log) + " (" + log_level(log) + ")"
+
+Meaning:
+- Take the message.
+- Add space and opening parenthesis.
+- Add the log level.
+- Add closing parenthesis.
+
+JavaScript comparison:
+
+message(log) + " (" + logLevel(log) + ")"
+
+VBA comparison:
+
+Message(log) & " (" & LogLevel(log) & ")"
+
+============================================================
+3. Reusable Function Design
+============================================================
+
+Important lesson:
+- Do not repeat parsing logic everywhere.
+- Build small functions with one clear responsibility.
+- Reuse them.
+
+Good design:
+
+std::string message(std::string log);
+std::string log_level(std::string log);
+std::string reformat(std::string log);
+
+Why this is good:
+- message() knows how to extract the message.
+- log_level() knows how to extract the log level.
+- reformat() only knows how to combine them.
+
+This makes the code easier to update later.
+
+If the log format changes, you update message() and log_level(), not every place where formatting is used.
+
+This is similar to good VBA and JavaScript design:
+- Write reusable functions.
+- Avoid copy-paste logic.
+- Keep each function responsible for one job.
+
+============================================================
+4. Things To Be Careful About
+============================================================
+
+1. Do not confuse return type and returned value.
+
+Wrong:
+
+int get_name()
+{
+    return "Cansoy";
+}
+
+Correct:
+
+std::string get_name()
+{
+    return "Cansoy";
+}
+
+------------------------------------------------------------
+
+2. Do not use void when the function should return a value.
+
+Wrong for returning text:
+
+void get_message()
+{
+    return "System ready";
+}
+
+Correct:
+
+std::string get_message()
+{
+    return "System ready";
+}
+
+------------------------------------------------------------
+
+3. Do not use print/show names for functions that return values.
+
+Better:
+
+std::string get_message();
+
+for returning.
+
+Better:
+
+void print_message();
+
+for printing.
+
+------------------------------------------------------------
+
+4. Do not hard-code indexes when the format can vary.
+
+Weak:
+
+return log.substr(9);
+
+Better:
+
+std::size_t idx = log.find("]: ");
+return log.substr(idx + 3);
+
+Because:
+- ERROR, INFO, WARNING have different lengths.
+
+------------------------------------------------------------
+
+5. Remember that substr(start, count) uses count, not end index.
+
+Wrong mental model:
+- substr(1, idx - 1) means from index 1 to index idx - 1.
+
+Correct mental model:
+- substr(1, idx - 1) means start at index 1 and take idx - 1 characters.
+
+------------------------------------------------------------
+
+6. Prefer std::size_t for string positions.
+
+Good:
+
+std::size_t idx = log.find("]: ");
+
+Reason:
+- find() returns std::size_t.
+- string sizes and indexes are represented by std::size_t.
+
+------------------------------------------------------------
+
+7. Remember to include needed headers.
+
+For std::string:
+
+#include <string>
+
+For std::cout:
+
+#include <iostream>
+
+Do not rely on indirect includes.
+
+------------------------------------------------------------
+
+8. Avoid unnecessary semicolon after normal function definitions.
+
+Not needed:
+
+std::string message(std::string log)
+{
+    return log.substr(9);
+};
+
+Better:
+
+std::string message(std::string log)
+{
+    return log.substr(9);
+}
+
+============================================================
+5. Final Code From Exercise 002
+============================================================
+
+#include <string>
+
+std::string log_level(std::string log)
+{
+    std::size_t idx = log.find("]: ");
+    return log.substr(1, idx - 1);
+}
+
+std::string message(std::string log)
+{
+    std::size_t idx = log.find("]: ");
+    return log.substr(idx + 3);
+}
+
+std::string reformat(std::string log)
+{
+    return message(log) + " (" + log_level(log) + ")";
+}
+
+============================================================
+6. Concepts To Review Later
+============================================================
+
+These are important, but not necessary to go deep right now:
+
+- const std::string& to avoid copying strings
+- What happens if find() fails
+- std::string::npos
+- Header files and source files in detail
+- Namespaces
+- Unit tests
+- Build systems and CMake
+- Linker errors
+- Object lifetime and ownership
+
+For now, the most important thing is:
+- Understand functions.
+- Understand return values.
+- Understand string slicing with find() and substr().
+- Build reusable functions.
+
