@@ -1,2 +1,2 @@
 # exercism_cpp
-solving exercism cpp questions
+solve exercism cpp questions
