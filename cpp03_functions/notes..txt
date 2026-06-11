@@ -1,0 +1,459 @@
+
+============================================================
+003 - Lasagna
+============================================================
+
+Main concept
+------------
+Variables, integer functions, arithmetic, and functions calling other functions.
+
+Functions learned
+-----------------
+int ovenTime();
+int remainingOvenTime(int actualMinutesInOven);
+int preparationTime(int numberOfLayers);
+int elapsedTime(int numberOfLayers, int actualMinutesInOven);
+
+Correct logic
+-------------
+int ovenTime()
+{
+    return 40;
+}
+
+int remainingOvenTime(int actualMinutesInOven)
+{
+    return ovenTime() - actualMinutesInOven;
+}
+
+int preparationTime(int numberOfLayers)
+{
+    return numberOfLayers * 2;
+}
+
+int elapsedTime(int numberOfLayers, int actualMinutesInOven)
+{
+    return preparationTime(numberOfLayers) + actualMinutesInOven;
+}
+
+Important mistake discovered
+----------------------------
+Wrong idea:
+elapsedTime = preparationTime + remainingOvenTime
+
+Correct idea:
+elapsedTime = preparationTime + actualMinutesInOven
+
+Why?
+----
+elapsedTime means how much time has already been spent in the process.
+It includes:
+- preparation time already spent
+- oven time already spent
+
+It does NOT include remaining oven time.
+
+Mental test
+-----------
+elapsedTime(5, 12)
+preparationTime(5) = 5 * 2 = 10
+actualMinutesInOven = 12
+elapsedTime = 10 + 12 = 22
+
+What was learned
+----------------
+Function names must match their real meaning.
+remainingOvenTime() answers: how much time is left?
+elapsedTime() answers: how much time has already passed?
+
+VBA equivalent
+--------------
+Function ElapsedTime(ByVal numberOfLayers As Long, ByVal actualMinutesInOven As Long) As Long
+    ElapsedTime = PreparationTime(numberOfLayers) + actualMinutesInOven
+End Function
+
+JavaScript equivalent
+---------------------
+function elapsedTime(numberOfLayers, actualMinutesInOven) {
+    return preparationTime(numberOfLayers) + actualMinutesInOven;
+}
+
+Be careful
+----------
+Some bugs accidentally pass one test case.
+Example:
+elapsedTime(3, 20)
+Wrong formula may still return 26 by coincidence because remaining time is also 20.
+Always test with different values.
+
+Good testing habit
+------------------
+Use at least two mental tests:
+- one normal case
+- one case where the wrong formula would fail
+
+============================================================
+004 - Freelancer Rates
+============================================================
+
+Main concept
+------------
+Integers, floating-point numbers, percentages, rounding, and reusable math functions.
+
+Functions learned
+-----------------
+double daily_rate(double hourly_rate);
+double apply_discount(double before_discount, double discount);
+double monthly_rate(double hourly_rate, double discount);
+double days_in_budget(double budget, double hourly_rate, double discount);
+
+Important constants
+-------------------
+const int DAYOFWORKINHOURS = 8;
+const int DAYOFWORKINMONTH = 22;
+
+Better naming style suggestion:
+const int day_of_work_in_hours{8};
+const int billable_days_in_month{22};
+
+Both work, but readable names are important in larger projects.
+
+Integer division vs floating-point division
+-------------------------------------------
+5 / 2     -> 2
+5.0 / 2   -> 2.5
+
+Why?
+----
+int / int gives integer division.
+double / int promotes the calculation to double.
+
+Important detail
+----------------
+5.0 is usually double.
+5.0f is float.
+
+This matters in money/rate calculations because decimals are important.
+
+Function 1 - daily_rate
+-----------------------
+double daily_rate(double hourly_rate)
+{
+    return hourly_rate * 8;
+}
+
+Or with constant:
+
+double daily_rate(double hourly_rate)
+{
+    return hourly_rate * DAYOFWORKINHOURS;
+}
+
+Mental example:
+hourly_rate = 60
+daily_rate = 60 * 8 = 480
+
+Function 2 - apply_discount
+---------------------------
+double apply_discount(double before_discount, double discount)
+{
+    return before_discount - before_discount * (discount / 100);
+}
+
+Alternative:
+return before_discount * (1 - discount / 100);
+
+Mental example:
+apply_discount(150, 10)
+150 - 150 * 0.10 = 135
+
+Important idea
+--------------
+The discount parameter comes as percent, like 10 or 25.
+So we convert it into a fraction by dividing by 100.
+
+No explicit cast needed here
+----------------------------
+Because parameters are already double:
+
+double apply_discount(double before_discount, double discount)
+
+So discount / 100 works because C++ promotes 100 to double in this expression.
+
+Function 3 - monthly_rate
+-------------------------
+Rule:
+1. Calculate daily rate.
+2. Multiply by 22 billable days.
+3. Apply discount.
+4. Round up using std::ceil.
+
+Correct logic:
+
+double monthly_rate(double hourly_rate, double discount)
+{
+    double monthlyRate = daily_rate(hourly_rate) * DAYOFWORKINMONTH;
+    return std::ceil(apply_discount(monthlyRate, discount));
+}
+
+Important mistake discovered
+----------------------------
+Wrong order:
+ceil monthly rate first, then apply discount.
+
+Correct order:
+apply discount first, then ceil the final monthly result.
+
+Why?
+----
+The exercise rule says monthly rate should be discounted, then rounded up.
+
+Mental example:
+monthly_rate(10, 0)
+daily_rate(10) = 80
+monthlyRate = 80 * 22 = 1760
+apply_discount(1760, 0) = 1760
+ceil(1760) = 1760
+
+Function 4 - days_in_budget
+---------------------------
+Rule:
+1. Calculate daily rate.
+2. Apply discount to daily rate.
+3. Divide budget by discounted daily rate.
+4. Round down using std::floor because only complete days count.
+
+Correct logic:
+
+double days_in_budget(double budget, double hourly_rate, double discount)
+{
+    double dailyRate = daily_rate(hourly_rate);
+    double discountedDailyRate = apply_discount(dailyRate, discount);
+    return std::floor(budget / discountedDailyRate);
+}
+
+Mental example:
+days_in_budget(1000, 10, 0)
+daily_rate = 10 * 8 = 80
+discounted daily rate = 80
+1000 / 80 = 12.5
+complete days = floor(12.5) = 12
+
+Exercise example:
+days_in_budget(20000, 80, 11)
+daily_rate = 80 * 8 = 640
+11% discount amount = 640 * 11 / 100 = 70.4
+discounted daily rate = 640 - 70.4 = 569.6
+20000 / 569.6 = about 35.11
+complete days = floor(35.11) = 35
+
+Important rounding tools from <cmath>
+-------------------------------------
+std::ceil(12.3)  -> 13.0
+std::ceil(12.6)  -> 13.0
+
+std::floor(12.3) -> 12.0
+std::floor(12.6) -> 12.0
+
+std::round(12.4) -> 12.0
+std::round(12.6) -> 13.0
+
+Mental model
+------------
+ceil  = always up
+floor = always down
+round = nearest
+
+Be careful
+----------
+1. monthly_rate uses std::ceil after discount.
+2. days_in_budget uses std::floor after dividing the budget.
+3. Do not ceil the discounted daily rate in days_in_budget.
+4. Do not subtract apply_discount(...) from the original value, because apply_discount already returns the final discounted value.
+
+Example of wrong logic
+----------------------
+monthlyRate - apply_discount(monthlyRate, discount)
+
+Why wrong?
+----------
+If monthlyRate = 1000 and discount = 10:
+apply_discount(1000, 10) = 900
+1000 - 900 = 100
+That gives only the discount amount, not the discounted price.
+
+Correct logic:
+return apply_discount(monthlyRate, discount);
+
+Function order in C++
+---------------------
+C++ must know a function before it is used.
+
+So if monthly_rate calls apply_discount, then either:
+1. Put apply_discount above monthly_rate, or
+2. Use a function prototype.
+
+Simple beginner-friendly choice:
+Put helper functions above the functions that use them.
+
+Good order:
+daily_rate
+apply_discount
+monthly_rate
+days_in_budget
+
+std:: prefix
+------------
+floor and ceil belong to the standard library namespace.
+Prefer:
+std::floor(...)
+std::ceil(...)
+
+Instead of:
+floor(...)
+ceil(...)
+
+Include needed
+--------------
+Use:
+#include <cmath>
+
+Do not include unnecessary headers like <iostream> or <string> unless you use them.
+
+============================================================
+General C++ lessons from exercises 001-004
+============================================================
+
+1. Small functions are powerful
+------------------------------
+A function should do one clear job.
+This makes code easier to test, reuse, and fix.
+
+2. Reuse helper functions
+-------------------------
+Good examples:
+remainingOvenTime uses ovenTime.
+elapsedTime uses preparationTime.
+monthly_rate uses daily_rate and apply_discount.
+days_in_budget uses daily_rate and apply_discount.
+
+3. Function names matter
+------------------------
+A good function name tells you what kind of value it returns.
+If the name is elapsedTime, do not use remaining time inside it.
+
+4. Test mentally before running code
+------------------------------------
+Before compiling, ask:
+- What should this function return for simple input?
+- What should happen with edge-like values?
+- Am I using the right formula order?
+
+5. Be careful with operation order
+----------------------------------
+The order of operations changes the meaning.
+
+Example:
+monthly_rate:
+apply discount, then ceil
+
+Not:
+ceil, then apply discount
+
+6. Be careful with integer division
+-----------------------------------
+int / int removes the decimal part.
+For decimal results, make sure at least one value is double.
+
+7. Prefer std:: namespace explicitly
+------------------------------------
+Use std::ceil and std::floor.
+This keeps code clear and avoids namespace problems.
+
+8. Header files matter
+----------------------
+Use only what you need.
+For math rounding:
+#include <cmath>
+
+For strings:
+#include <string>
+
+For console output:
+#include <iostream>
+
+9. Match Exercism function signatures
+-------------------------------------
+Always check the provided .h file.
+If the header says int monthly_rate(...), your .cpp must also use int.
+If the header says double monthly_rate(...), your .cpp must use double.
+
+The logic can be correct but tests will fail if the signature does not match.
+
+10. Learning rule for future exercises
+--------------------------------------
+When your answer is wrong, do not ask for the final fixed code immediately.
+Instead:
+- run a mental test
+- locate the wrong function
+- locate the wrong line
+- explain what the function should mean
+- rewrite only the smallest part
+
+This builds real understanding and offsets forgetting.
+
+============================================================
+VBA and JavaScript connections
+============================================================
+
+VBA connection
+--------------
+C++ functions are similar to VBA Functions:
+
+VBA:
+Function DailyRate(ByVal hourlyRate As Double) As Double
+    DailyRate = hourlyRate * 8
+End Function
+
+C++:
+double daily_rate(double hourly_rate)
+{
+    return hourly_rate * 8;
+}
+
+Main difference:
+VBA assigns result to function name.
+C++ uses return.
+
+JavaScript connection
+---------------------
+JavaScript:
+function dailyRate(hourlyRate) {
+    return hourlyRate * 8;
+}
+
+C++:
+double daily_rate(double hourly_rate)
+{
+    return hourly_rate * 8;
+}
+
+Main difference:
+JavaScript variables are dynamically typed.
+C++ function parameters and return types are explicitly typed.
+
+============================================================
+Personal reminders
+============================================================
+
+You learned well when you explained in your own words:
+- elapsedTime means time spent in progress.
+- apply_discount returns final discounted value, not discount amount.
+- int / int gives integer division.
+- double involvement gives decimal result.
+- monthly_rate uses ceil.
+- days_in_budget uses floor.
+
+Keep this habit:
+Explain the function meaning first, then write the code.
+
