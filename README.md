@@ -1,2 +1,3 @@
-# exercism_cpp
-solving exercism cpp questions
+# Exercism C++ Solutions
+
+This repository is for collecting solutions to Exercism C++ exercises.
