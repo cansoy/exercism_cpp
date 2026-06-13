@@ -1,0 +1,519 @@
+Exercism C++ Notes - 005 Last Will: Namespaces
+================================================
+
+Exercise
+--------
+005 - Last Will
+Main concept: Namespaces
+
+Core Idea
+---------
+A namespace is a named scope.
+It helps organize code and prevents name collisions.
+
+In C++, two functions can have the same name if they live inside different namespaces.
+
+Example:
+
+namespace family_a
+{
+    int secret()
+    {
+        return 10;
+    }
+}
+
+namespace family_b
+{
+    int secret()
+    {
+        return 20;
+    }
+}
+
+Both functions are named secret(), but they do not conflict because they are inside different namespaces.
+
+Calling a Function Inside a Namespace
+-------------------------------------
+To call a function inside a namespace, use the scope resolution operator:
+
+::
+
+Example:
+
+family_a::secret()
+family_b::secret()
+
+Meaning:
+
+family_a::secret()
+
+Go inside namespace family_a, then call secret().
+
+Scope Resolution Operator
+-------------------------
+The operator:
+
+::
+
+means:
+
+look inside this scope
+
+Examples:
+
+std::string
+std::cout
+std::ceil
+estate_executor::assemble_account_number()
+zhang::blue::code_fragment()
+
+std is also a namespace from the C++ Standard Library.
+
+Nested Namespaces
+-----------------
+Namespaces can be inside other namespaces.
+
+Example:
+
+namespace outer
+{
+    namespace inner
+    {
+        int value()
+        {
+            return 50;
+        }
+    }
+}
+
+Calling it:
+
+outer::inner::value()
+
+Meaning:
+
+Go into outer,
+then go into inner,
+then call value().
+
+Modern C++ Nested Namespace Syntax
+----------------------------------
+Instead of writing:
+
+namespace a
+{
+    namespace b
+    {
+        namespace c
+        {
+            int oki()
+            {
+                return 10;
+            }
+        }
+    }
+}
+
+Modern C++ allows:
+
+namespace a::b::c
+{
+    int oki()
+    {
+        return 10;
+    }
+}
+
+Calling it:
+
+a::b::c::oki()
+
+Important: even though deep namespaces are possible, do not overuse them. Usually 1 to 3 levels are enough.
+
+Function Name vs Function Call
+------------------------------
+Very important distinction:
+
+family_a::bank_number_part
+
+This refers to the function name itself.
+
+family_a::bank_number_part()
+
+This calls the function and uses its returned value.
+
+Parentheses mean: execute/call this function now.
+
+If the function has no parameters, the parentheses are empty:
+
+code_fragment()
+
+If the function has one parameter:
+
+bank_number_part(secret_modifier)
+
+Exercise Structure
+------------------
+The exercise asked us to create this namespace:
+
+namespace estate_executor
+{
+    // functions go here
+}
+
+Functions inside it become:
+
+estate_executor::assemble_account_number(...)
+estate_executor::assemble_code()
+
+Task 1: Create estate_executor Namespace
+----------------------------------------
+Basic skeleton:
+
+namespace estate_executor
+{
+
+}
+
+This creates the namespace body.
+
+Task 2: assemble_account_number
+-------------------------------
+The function signature:
+
+int assemble_account_number(int secret_modifier)
+
+Meaning:
+
+- int before the function name means it returns an integer.
+- assemble_account_number is the function name.
+- int secret_modifier is an integer parameter.
+
+Temporary Return
+----------------
+While building a function, this can be useful:
+
+int assemble_account_number(int secret_modifier)
+{
+    return 0;
+}
+
+Why?
+
+Because the function promises to return int.
+Returning 0 temporarily keeps the program compilable while the real logic is not finished yet.
+
+Real Family Names in Exercise
+-----------------------------
+The real namespaces were:
+
+zhang
+khan
+garcia
+
+Each had its own bank_number_part function:
+
+zhang::bank_number_part(secret_modifier)
+khan::bank_number_part(secret_modifier)
+garcia::bank_number_part(secret_modifier)
+
+Correct logic:
+
+int assemble_account_number(int secret_modifier)
+{
+    return zhang::bank_number_part(secret_modifier)
+         + khan::bank_number_part(secret_modifier)
+         + garcia::bank_number_part(secret_modifier);
+}
+
+Important Detail
+----------------
+Do not add secret_modifier separately at the end.
+
+Wrong idea:
+
+return zhang::bank_number_part(secret_modifier)
+     + khan::bank_number_part(secret_modifier)
+     + garcia::bank_number_part(secret_modifier)
+     + secret_modifier;
+
+Why wrong?
+
+Because each family function already uses secret_modifier internally.
+
+Example:
+
+int bank_number_part(int secret_modifier)
+{
+    int zhang_part{8'541};
+    return (zhang_part * secret_modifier) % 10000;
+}
+
+So secret_modifier is already part of the calculation.
+
+Task 3: assemble_code
+---------------------
+The rule:
+
+1. Add all red fragments.
+2. Add all blue fragments.
+3. Multiply both sums.
+
+Real nested namespaces:
+
+zhang::red::code_fragment()
+zhang::blue::code_fragment()
+
+khan::red::code_fragment()
+khan::blue::code_fragment()
+
+garcia::red::code_fragment()
+garcia::blue::code_fragment()
+
+Direct solution:
+
+int assemble_code()
+{
+    return (zhang::red::code_fragment()
+          + khan::red::code_fragment()
+          + garcia::red::code_fragment())
+         * (zhang::blue::code_fragment()
+          + khan::blue::code_fragment()
+          + garcia::blue::code_fragment());
+}
+
+More readable version:
+
+int assemble_code()
+{
+    int red_sum{
+        zhang::red::code_fragment()
+      + khan::red::code_fragment()
+      + garcia::red::code_fragment()
+    };
+
+    int blue_sum{
+        zhang::blue::code_fragment()
+      + khan::blue::code_fragment()
+      + garcia::blue::code_fragment()
+    };
+
+    return red_sum * blue_sum;
+}
+
+Why the readable version is better:
+
+- red_sum and blue_sum explain the intention.
+- Easier to debug.
+- Easier to update later.
+- Better for long-term maintainability.
+
+Full Final Exercise Logic
+-------------------------
+
+namespace estate_executor
+{
+    int assemble_account_number(int secret_modifier)
+    {
+        return zhang::bank_number_part(secret_modifier)
+             + khan::bank_number_part(secret_modifier)
+             + garcia::bank_number_part(secret_modifier);
+    }
+
+    int assemble_code()
+    {
+        int red_sum{
+            zhang::red::code_fragment()
+          + khan::red::code_fragment()
+          + garcia::red::code_fragment()
+        };
+
+        int blue_sum{
+            zhang::blue::code_fragment()
+          + khan::blue::code_fragment()
+          + garcia::blue::code_fragment()
+        };
+
+        return red_sum * blue_sum;
+    }
+}
+
+VBA Comparison
+--------------
+VBA does not have full namespaces like C++.
+
+But VBA can imitate a small part of namespace behavior through module names.
+
+Example:
+
+Module name: ZhangBlue
+
+Public Function CodeFragment() As Long
+    CodeFragment = 677
+End Function
+
+Module name: ZhangRed
+
+Public Function CodeFragment() As Long
+    CodeFragment = 512
+End Function
+
+Call them:
+
+ZhangBlue.CodeFragment
+ZhangRed.CodeFragment
+
+This prevents confusion between same public function names in different modules.
+
+VBA equivalent idea:
+
+ModuleName.FunctionName
+
+C++ equivalent:
+
+namespace_name::function_name()
+
+JavaScript Comparison
+---------------------
+JavaScript uses objects/modules for a similar idea:
+
+const zhang = {
+    blue: {
+        codeFragment() {
+            return 677;
+        }
+    }
+};
+
+Call:
+
+zhang.blue.codeFragment()
+
+Comparison Summary
+------------------
+VBA:
+
+ZhangBlue.CodeFragment
+
+JavaScript:
+
+zhang.blue.codeFragment()
+
+C++:
+
+zhang::blue::code_fragment()
+
+Common Mistakes to Avoid
+------------------------
+1. Forgetting the full namespace path.
+
+Wrong:
+
+code_fragment()
+
+Correct:
+
+zhang::blue::code_fragment()
+
+2. Forgetting parentheses when calling a function.
+
+Wrong:
+
+zhang::blue::code_fragment
+
+Correct:
+
+zhang::blue::code_fragment()
+
+3. Adding secret_modifier twice.
+
+Wrong:
+
+zhang::bank_number_part(secret_modifier)
++ khan::bank_number_part(secret_modifier)
++ garcia::bank_number_part(secret_modifier)
++ secret_modifier
+
+Correct:
+
+zhang::bank_number_part(secret_modifier)
++ khan::bank_number_part(secret_modifier)
++ garcia::bank_number_part(secret_modifier)
+
+4. Creating unnecessary namespaces or functions in the real Exercism solution.
+
+In Exercism, family namespaces are usually already provided.
+Your job is usually to use them, not redefine them.
+
+5. Too much nesting.
+
+C++ allows:
+
+a::b::c::d::oki()
+
+But too much nesting can reduce readability.
+Use namespaces to organize code, not to make names unnecessarily long.
+
+What Was Learned
+----------------
+- namespace creates a named scope.
+- Namespaces prevent name collisions.
+- :: is the scope resolution operator.
+- Nested namespaces are accessed by chaining ::.
+- std is a namespace from the C++ Standard Library.
+- function_name and function_name() are different.
+- function_name() calls the function.
+- Namespaces are useful for organizing real projects.
+- VBA modules provide a limited namespace-like behavior.
+- C++ namespaces are more powerful than VBA module qualification.
+
+What Should Be Remembered
+-------------------------
+The key mental model:
+
+namespace = named folder/scope for code
+:: = look inside this scope
+() = call the function
+
+Example:
+
+zhang::blue::code_fragment()
+
+means:
+
+Go inside zhang,
+then inside blue,
+then call code_fragment,
+then use its returned value.
+
+Real-World Architecture Connection
+----------------------------------
+In larger C++ projects, namespaces can organize systems:
+
+company::project::module::function()
+
+For a future safety feedback project:
+
+safety::feedback::rules::apply_rule()
+safety::employees::repository::load_all()
+safety::reports::export_to_csv()
+
+This is similar to organizing VBA code into modules, but C++ gives more precise and scalable structure.
+
+Senior Developer Tip
+--------------------
+Use namespaces to make ownership of meaning clear.
+
+Good namespace names answer:
+
+Where does this function belong?
+Which subsystem owns this concept?
+Can another subsystem have the same function name safely?
+
+But avoid overengineering.
+Simple namespace structure is usually better than deeply nested structure.
+
+Final One-Line Summary
+----------------------
+Namespaces let us organize C++ code into named scopes so same-named functions can safely exist, and we access the exact one we want using the :: scope-resolution operator.
