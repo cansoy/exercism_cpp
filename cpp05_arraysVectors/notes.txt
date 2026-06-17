@@ -1,0 +1,803 @@
+Exercism C++ Track - Exercise 008 Summary
+Exercise: 008 - Making the Grade
+Main Concepts: std::array, std::vector, safe access, iterators, basic exceptions
+Date: 2026-06-17
+
+============================================================
+1. BIG PICTURE
+============================================================
+
+In Exercise 008, the main goal was to understand how C++ stores and processes collections of values.
+
+The exercise introduced two important C++ containers:
+
+1. std::array
+   - Fixed-size container.
+   - Size is known at compile time.
+   - Good when the number of elements never changes.
+
+2. std::vector
+   - Dynamic-size container.
+   - Size can grow or shrink at runtime.
+   - Good when the number of elements may change.
+
+This exercise was not only about arrays and vectors. It also introduced deeper professional C++ thinking:
+
+- How do we access elements safely?
+- What happens if an index is wrong?
+- When should we use [] and when should we use .at()?
+- What is an iterator?
+- How can an iterator be converted into an index-like position?
+- How do we handle invalid input?
+- When should we return a fallback value?
+- When should we throw an exception?
+
+============================================================
+2. std::array VS std::vector
+============================================================
+
+std::array example:
+
+    std::array<int, 3> grades{90, 80, 70};
+
+Meaning:
+
+    index 0 -> 90
+    index 1 -> 80
+    index 2 -> 70
+
+Important points:
+
+- std::array<int, 3> stores int values.
+- It has exactly 3 elements.
+- It cannot grow or shrink.
+
+VBA comparison:
+    Similar to a fixed-size array.
+
+JavaScript comparison:
+    JavaScript arrays are dynamic by default, so std::array is more strict than JS arrays.
+
+std::vector example:
+
+    std::vector<int> scores{90, 80, 70};
+
+Important points:
+
+- std::vector<int> stores int values.
+- It can grow with push_back().
+- It can shrink with pop_back().
+- It is closer to JavaScript arrays in behavior.
+
+VBA comparison:
+    Similar to dynamic arrays or Collection-like behavior, but strongly typed.
+
+JavaScript comparison:
+    Similar to number[], but C++ vector stores one clear type and is more strict.
+
+============================================================
+3. TASK 1 - round_down_scores()
+============================================================
+
+Task idea:
+    Convert student scores from double to int.
+
+Example:
+    std::vector<double> scores{90.33, 40.5, 55.44};
+
+Expected result:
+    std::vector<int>{90, 40, 55};
+
+Important C++ concept:
+    static_cast<int>(value)
+
+Example:
+    static_cast<int>(90.33) -> 90
+    static_cast<int>(40.5)  -> 40
+    static_cast<int>(55.44) -> 55
+
+Important clarification:
+    static_cast<int> does not round. It truncates toward zero.
+
+For positive numbers:
+    90.99 -> 90
+
+For negative numbers:
+    -3.9 -> -3
+
+Learning version:
+
+    std::vector<int> round_down_scores(std::vector<double> student_scores)
+    {
+        std::vector<int> rounded_scores{};
+
+        for (double score : student_scores)
+        {
+            rounded_scores.push_back(static_cast<int>(score));
+        }
+
+        return rounded_scores;
+    }
+
+Professional note:
+    Using const reference avoids copying:
+
+        const std::vector<double>& student_scores
+
+    But Exercism function signatures must match the expected header.
+
+============================================================
+4. TASK 2 - count_failed_students()
+============================================================
+
+Rule:
+    Passing score is greater than 40.
+    Failed score is less than or equal to 40.
+
+So:
+    score > 40   -> successful
+    score <= 40  -> failed
+
+Example:
+    std::vector<int> scores{90, 40, 55, 70, 30};
+
+Failed scores:
+    40
+    30
+
+So the failed count is:
+    2
+
+You first created helper functions:
+    successful_scores(...)
+    failed_scores(...)
+
+This was good architectural thinking because each function had one responsibility.
+
+Example:
+
+    std::vector<int> failed_scores(const std::vector<int>& scores)
+    {
+        std::vector<int> failedScores{};
+
+        for (int score : scores)
+        {
+            if (score <= 40)
+            {
+                failedScores.push_back(score);
+            }
+        }
+
+        return failedScores;
+    }
+
+Then count_failed_students() could use:
+    return failed_scores(student_scores).size();
+
+Important concept:
+    .size() returns std::size_t, not int.
+
+More direct version:
+
+    int count_failed_students(const std::vector<int>& student_scores)
+    {
+        int failed_count{0};
+
+        for (int score : student_scores)
+        {
+            if (score <= 40)
+            {
+                failed_count++;
+            }
+        }
+
+        return failed_count;
+    }
+
+Professional trade-off:
+
+1. Helper-vector version:
+   - Clear separation.
+   - Useful if we need the failed scores later.
+   - Uses extra memory.
+
+2. Direct-count version:
+   - More efficient.
+   - Better if we only need the count.
+
+============================================================
+5. TASK 3 - letter_grades()
+============================================================
+
+Task idea:
+    Return the lower thresholds for D, C, B, and A.
+
+Return type:
+    std::array<int, 4>
+
+Why std::array?
+    There are always exactly four thresholds: D, C, B, A.
+
+Rule:
+    Failing scores are <= 40.
+    D starts at 41.
+
+Example:
+    letter_grades(100)
+
+Calculation:
+    increase = (100 - 40) / 4
+    increase = 60 / 4
+    increase = 15
+
+Thresholds:
+    D starts at 41
+    C starts at 41 + 15 = 56
+    B starts at 56 + 15 = 71
+    A starts at 71 + 15 = 86
+
+Result:
+    {41, 56, 71, 86}
+
+Example:
+    letter_grades(88)
+
+Calculation:
+    increase = (88 - 40) / 4
+    increase = 48 / 4
+    increase = 12
+
+Thresholds:
+    D starts at 41
+    C starts at 53
+    B starts at 65
+    A starts at 77
+
+Result:
+    {41, 53, 65, 77}
+
+Your solution:
+
+    std::array<int, 4> letter_grades(int highest_score)
+    {
+        std::array<int, 4> grades{};
+        int lowestGrade{41};
+        int increase = (highest_score - 40) / 4;
+
+        for (size_t i = 0; i < grades.size(); i++)
+        {
+            grades.at(i) = lowestGrade;
+            lowestGrade += increase;
+        }
+
+        return grades;
+    }
+
+Important learning:
+- grades has exactly 4 elements.
+- .at(i) checks bounds.
+- lowestGrade is updated each loop.
+- The function returns the array of thresholds, not the grade name.
+
+Common confusion corrected:
+    letter_grades(88) does not mean "What grade is 88?"
+    It means "Build the D/C/B/A threshold table where 88 is the highest score."
+
+============================================================
+6. TASK 4 - student_ranking()
+============================================================
+
+Task idea:
+    Combine two vectors: student_scores and student_names.
+
+Example:
+    student_scores = {100, 99, 90}
+    student_names  = {"Joci", "Sara", "Kora"}
+
+Expected result:
+    {
+        "1. Joci: 100",
+        "2. Sara: 99",
+        "3. Kora: 90"
+    }
+
+Important hidden assumption:
+    The two vectors are synchronized by index.
+
+Meaning:
+    student_names[0] belongs to student_scores[0]
+    student_names[1] belongs to student_scores[1]
+    student_names[2] belongs to student_scores[2]
+
+Important C++ tool:
+    std::to_string(number)
+
+Example:
+    std::to_string(100) -> "100"
+
+Your logic:
+
+    std::vector<std::string> student_ranking(
+        const std::vector<int>& scores,
+        const std::vector<std::string>& names)
+    {
+        std::vector<std::string> studentRanking{};
+        std::string item{};
+
+        for (size_t i = 0; i < scores.size(); i++)
+        {
+            item = std::to_string(i + 1) + ". " +
+                   names.at(i) + ": " +
+                   std::to_string(scores.at(i));
+
+            studentRanking.push_back(item);
+        }
+
+        return studentRanking;
+    }
+
+Mistake corrected:
+    Calling item.clear() before push_back() erased the built string before storing it.
+
+Correct order:
+    build string
+    push string into vector
+    continue loop
+
+============================================================
+7. TASK 5 - perfect_score()
+============================================================
+
+Task idea:
+    Return the first student who has exactly 100.
+
+Example:
+    student_scores = {90, 80, 100}
+    student_names  = {"Nur", "Tony", "Fatima"}
+
+Result:
+    "Fatima"
+
+Important rule:
+    Perfect score means exactly score == 100.
+
+Not:
+    highest score
+
+Example:
+    student_scores = {90, 80, 99}
+    student_names  = {"Nur", "Tony", "Fatima"}
+
+Highest score is 99, but there is no perfect score.
+
+Correct result:
+    ""
+
+You wanted to use std::max_element.
+This was a good algorithm-learning idea.
+
+Required include:
+    #include <algorithm>
+
+std::max_element returns an iterator, not the value directly.
+
+Example:
+    auto max_it = std::max_element(student_scores.begin(), student_scores.end());
+
+Meaning:
+    max_it is a position handle pointing to the max element.
+
+To get the value:
+    *max_it
+
+To get the index-like position:
+    std::distance(student_scores.begin(), max_it)
+
+Your improved version:
+
+    const int PERFECT_SCORE = 100;
+
+    std::string perfect_score(
+        const std::vector<int>& student_scores,
+        const std::vector<std::string>& student_names)
+    {
+        auto max_it = std::max_element(student_scores.begin(), student_scores.end());
+        int index = std::distance(student_scores.begin(), max_it);
+
+        if (*max_it == PERFECT_SCORE)
+        {
+            return student_names.at(index);
+        }
+
+        return "";
+    }
+
+Important concept:
+    iterator = where the element is
+    *iterator = value at that position
+    std::distance(begin, iterator) = index-like position
+
+Professional warning:
+    This version assumes student_scores is not empty.
+
+If the vector is empty, max_it equals student_scores.end(), and dereferencing it with *max_it is unsafe.
+
+A defensive version checks:
+    if (student_scores.empty())
+    {
+        return "";
+    }
+
+============================================================
+8. [] VS .at()
+============================================================
+
+C++ vector access can be done with:
+
+    scores[i]
+
+or:
+
+    scores.at(i)
+
+Difference:
+    []    -> faster / lower overhead, but does not check bounds
+    .at() -> safer, checks bounds and throws std::out_of_range if invalid
+
+Example:
+    std::vector<int> scores{90, 80, 100};
+    scores[10];
+
+Danger:
+    Undefined behavior.
+    Program may crash, print garbage, or appear to work incorrectly.
+
+Example:
+    scores.at(10);
+
+Result:
+    Throws std::out_of_range.
+
+VBA comparison:
+    VBA array out-of-range usually raises an error.
+
+JavaScript comparison:
+    arr[10] gives undefined.
+
+C++ comparison:
+    scores[10] gives undefined behavior.
+    scores.at(10) throws an exception.
+
+============================================================
+9. BASIC EXCEPTION MODEL
+============================================================
+
+try/catch example:
+
+    #include <iostream>
+    #include <vector>
+    #include <stdexcept>
+
+    int main()
+    {
+        try
+        {
+            std::vector<int> scores{90, 80, 100};
+            std::cout << scores.at(10) << std::endl;
+        }
+        catch (const std::out_of_range& error)
+        {
+            std::cout << "Invalid index!" << std::endl;
+            std::cout << error.what() << std::endl;
+        }
+    }
+
+What happens:
+1. scores has only indexes 0, 1, 2.
+2. scores.at(10) checks bounds.
+3. Index 10 is invalid.
+4. .at(10) throws std::out_of_range.
+5. Program jumps to catch block.
+6. catch block prints custom message.
+7. error.what() prints compiler/library-provided detail.
+
+Expected output may be similar to:
+    Invalid index!
+    vector::_M_range_check: __n (which is 10) >= this->size() (which is 3)
+
+The exact error.what() text may vary by compiler and standard library.
+
+Mental model:
+    try   = run code that may fail
+    catch = handle the failure safely
+    what() = read exception message
+
+VBA comparison:
+    On Error GoTo ErrorHandler
+
+JavaScript comparison:
+    try/catch
+
+============================================================
+10. THROWING YOUR OWN EXCEPTION
+============================================================
+
+Incorrect attempt:
+    throw("Sizes not equal !");
+
+Problem:
+    This throws a C-style string: const char*
+
+But this catch:
+    catch (const std::exception& e)
+
+does not catch raw string literals.
+
+Professional C++ style:
+    throw std::invalid_argument("Sizes are not equal");
+
+Required include:
+    #include <stdexcept>
+
+Then catch:
+    catch (const std::exception& e)
+    {
+        std::cout << e.what() << std::endl;
+    }
+
+Why it works:
+    std::invalid_argument inherits from std::exception.
+
+============================================================
+11. RETURN FALLBACK VS THROW EXCEPTION
+============================================================
+
+Important distinction:
+
+Normal no-result case:
+    No perfect score found
+
+This is not an error. It is a valid result.
+
+Good return:
+    return "";
+
+Bad input structure:
+    scores.size() != names.size()
+
+This is abnormal because the function cannot safely match scores to names.
+
+Possible designs:
+
+Design A - return fallback:
+    if (scores.size() != names.size())
+    {
+        return "";
+    }
+
+Design B - throw exception:
+    if (scores.size() != names.size())
+    {
+        throw std::invalid_argument("Scores and names must have the same size");
+    }
+
+Professional thinking:
+    No perfect score -> return ""
+    Bad input structure -> throw or explicitly handle error
+
+============================================================
+12. RETURN 0 AND RETURN 1 FROM main()
+============================================================
+
+In C++:
+    return 0; means program ended successfully.
+    return 1; means program ended with an error/failure.
+
+VBA comparison:
+    Exit Sub
+
+In C++, if you want to stop main early:
+
+    if (str.empty())
+    {
+        std::cout << "handle-error-dont-keep-up" << std::endl;
+        return 1;
+    }
+
+Any code after return 1 will not run.
+
+============================================================
+13. ITERATORS AND std::distance
+============================================================
+
+std::max_element returns an iterator.
+
+Example:
+    auto max_it = std::max_element(scores.begin(), scores.end());
+
+Meaning:
+    max_it points to the maximum element.
+
+To get the value:
+    *max_it
+
+To get the index-like position:
+    std::distance(scores.begin(), max_it)
+
+Example:
+    std::vector<int> scores{90, 80, 100};
+
+    auto max_it = std::max_element(scores.begin(), scores.end());
+    int index = std::distance(scores.begin(), max_it);
+
+Result:
+    *max_it -> 100
+    index   -> 2
+
+Important learning:
+    Iterator is not index.
+    Iterator is a position object.
+    std::distance converts the distance between begin and the iterator into an index-like number.
+
+============================================================
+14. ITERATOR INVALIDATION
+============================================================
+
+Important C++ concept:
+    Vector can reallocate memory when it grows.
+
+Example:
+    auto it = scores.begin();
+    scores.push_back(75);
+
+After push_back(), the vector may move its internal array to another memory location.
+Then old iterators may become invalid.
+
+Mental model:
+    vector may move its data
+    old iterator may point to old invalid memory
+
+This will matter more later when studying:
+- memory
+- references
+- ownership
+- lifetime
+- iterators
+- containers
+
+============================================================
+15. BEST PRACTICES LEARNED
+============================================================
+
+1. Prefer const reference for read-only vectors:
+       const std::vector<int>& scores
+
+2. Use .at() when learning or when defensive safety matters.
+
+3. Use [] when performance matters and you are sure the index is valid.
+
+4. Use std::array when size is fixed.
+
+5. Use std::vector when size can change.
+
+6. Use named constants instead of magic numbers:
+       const int PERFECT_SCORE = 100;
+
+7. Include the right headers:
+       #include <vector>
+       #include <array>
+       #include <string>
+       #include <algorithm>
+       #include <stdexcept>
+       #include <iostream>
+
+8. Do not confuse highest score with perfect score.
+
+9. Check empty vectors before dereferencing iterators.
+
+10. Be careful when two vectors must stay synchronized by index.
+
+============================================================
+16. COMMON MISTAKES TO AVOID
+============================================================
+
+1. Calling item.clear() before push_back().
+2. Thinking max score means perfect score.
+3. Forgetting #include <algorithm> for std::max_element.
+4. Throwing raw string literal: throw("error");
+5. Catching std::exception but throwing a non-std exception.
+6. Function promises std::string return but catch block does not return.
+7. Dereferencing iterator from empty vector.
+8. Assuming two vectors always have same size in real software.
+9. Using [] with invalid index.
+10. Forgetting exact Exercism function names/signatures matter.
+
+============================================================
+17. VBA EQUIVALENTS
+============================================================
+
+std::array:
+    Fixed-size array.
+
+std::vector:
+    Dynamic array / Collection-like structure.
+
+scores.at(i):
+    Safer indexed access, similar to checking bounds before access.
+
+scores[i]:
+    Direct fast access, but unsafe if wrong index.
+
+try/catch:
+    Similar idea to On Error GoTo.
+
+throw std::invalid_argument(...):
+    Similar to raising an error intentionally.
+
+return 1 from main:
+    Similar to stopping the procedure because an error occurred.
+
+return "":
+    Similar to returning an empty result when nothing was found.
+
+============================================================
+18. JAVASCRIPT EQUIVALENTS
+============================================================
+
+std::vector<int>:
+    number[]
+
+std::vector<std::string>:
+    string[]
+
+scores[i]:
+    scores[i]
+
+std::to_string(score):
+    String(score)
+
+std::max_element(scores.begin(), scores.end()):
+    Similar goal to Math.max(...scores), but C++ returns iterator, not value.
+
+try/catch:
+    try/catch
+
+throw std::invalid_argument(...):
+    throw new Error("message")
+
+Difference:
+    JavaScript arr[10] gives undefined.
+    C++ scores[10] is undefined behavior.
+
+============================================================
+19. WHAT SHOULD BE REMEMBERED
+============================================================
+
+Most important memory points:
+
+1. std::vector is dynamic.
+2. std::array is fixed-size.
+3. .at() is safer than [].
+4. [] can be dangerous if index is wrong.
+5. static_cast<int> truncates.
+6. std::to_string converts number to string.
+7. std::max_element returns iterator.
+8. *iterator gives value.
+9. std::distance(begin, iterator) gives index-like position.
+10. Empty vector must be checked before dereferencing algorithm result.
+11. Perfect score means exactly 100.
+12. Bad input structure is different from normal no-result.
+13. Exceptions should be used intentionally, not randomly.
+
+============================================================
+20. FINAL SUMMARY
+============================================================
+
+Exercise 008 taught how to work with fixed-size and dynamic-size collections in Modern C++.
+std::array is useful when the number of elements is known and fixed, while std::vector is useful
+when the collection can grow or shrink. The exercise also introduced element access using [] and
+.at(), vector building with push_back(), converting numbers with static_cast<int> and std::to_string,
+and using algorithms like std::max_element. The most important professional lesson was learning to
+think about invalid indexes, empty vectors, mismatched data, iterator positions, and when to return
+a safe fallback versus when to throw an exception. This exercise connected strongly with VBA arrays,
+JavaScript arrays, and real-world defensive programming.
