@@ -3,11 +3,13 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <stdexcept>
 
 const int PERFECT_SCORE = 100;
 
 std::vector<int> static_cast_int(const std::vector<double> &dbl)
 {
+
     std::vector<int> staticCastInt{};
     for (double d : dbl)
         staticCastInt.push_back(static_cast<int>(d));
@@ -17,6 +19,7 @@ std::vector<int> static_cast_int(const std::vector<double> &dbl)
 
 std::vector<int> successful_scores(const std::vector<int> &scores)
 {
+
     std::vector<int> successfulScores{};
     for (int i : scores)
         if (i > 40)
@@ -61,24 +64,47 @@ std::array<int, 4> letter_grades(int highest_score)
 std::vector<std::string> student_ranking(const std::vector<int> &scores,
                                          const std::vector<std::string> &names)
 {
-    std::vector<std::string> studentRanking{};
-    std::string item{};
-    for (size_t i = 0; i < scores.size(); i++)
+    try
     {
-        item = std::to_string(i + 1) + ". " + names.at(i) + ": " + std::to_string(scores.at(i));
-        studentRanking.push_back(item);
+        if (scores.size() != names.size())
+            throw std::invalid_argument("Sizes are not equal !");
+        std::vector<std::string> studentRanking{};
+        std::string item{};
+        for (size_t i = 0; i < scores.size(); i++)
+        {
+            item = std::to_string(i + 1) + ". " + names.at(i) + ": " + std::to_string(scores.at(i));
+            studentRanking.push_back(item);
+        }
+        return studentRanking;
     }
-
-    return studentRanking;
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+        return std::vector<std::string>{};
+    }
 }
 
 std::string perfect_score(
     const std::vector<int> &student_scores,
     const std::vector<std::string> &student_names)
 {
-    auto max_it = std::max_element(student_scores.begin(), student_scores.end());
-    int index = std::distance(student_scores.begin(), max_it);
-    if (*max_it == PERFECT_SCORE)
-        return student_names.at(index);
-    return "";
+    try
+    {
+        if (student_scores.size() != student_names.size())
+            throw std::invalid_argument("Sizes are not equal !");
+        auto max_it = std::max_element(student_scores.begin(), student_scores.end());
+        int index = std::distance(student_scores.begin(), max_it);
+        if (*max_it == PERFECT_SCORE)
+            return student_names.at(index);
+        return "";
+    }
+    catch (const std::exception &e)
+    {
+        std::cerr << e.what() << '\n';
+        return "";
+    }
+}
+
+int main()
+{
 }
