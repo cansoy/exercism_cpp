@@ -1,6 +1,6 @@
 # Commit Message Guide
 ## Formula
-<Action> <where/topic> <what>
+--- <Action> <where/topic> <what>
 ## Common Actions
 - Add = new file, folder, exercise, feature
 - Update = improve existing file/content
