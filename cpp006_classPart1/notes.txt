@@ -1,0 +1,798 @@
+Exercism C++ Track - Exercise 010 Summary
+Exercise: 010 - Ellen's Alien Game
+Main Concepts: Classes, Objects, Encapsulation, Constructors, Member Functions, Object State
+Date: 2026-06-18
+
+============================================================
+1. CODE STATUS
+============================================================
+
+Your final code is conceptually correct for Exercise 010.
+
+Final class shape:
+
+    class Alien
+    {
+    private:
+        int health{3};
+
+    public:
+        int x_coordinate;
+        int y_coordinate;
+
+        Alien(int x, int y) : x_coordinate{x}, y_coordinate{y} {}
+
+        int get_health()
+        {
+            return health;
+        }
+
+        bool hit()
+        {
+            if (health > 0)
+                health--;
+            return true;
+        }
+
+        bool is_alive()
+        {
+            return health > 0;
+        }
+
+        bool teleport(int new_x, int new_y)
+        {
+            x_coordinate = new_x;
+            y_coordinate = new_y;
+            return true;
+        }
+
+        bool collision_detection(const Alien& alien)
+        {
+            return alien.x_coordinate == x_coordinate &&
+                   alien.y_coordinate == y_coordinate;
+        }
+    };
+
+Your test:
+
+    Alien alien_1{10, 20};
+    Alien alien_2{10, 20};
+    Alien alien_3{10, 30};
+
+    alien_1.collision_detection(alien_2) -> true  -> prints 1
+    alien_1.collision_detection(alien_3) -> false -> prints 0
+
+============================================================
+2. BIG PICTURE
+============================================================
+
+Exercise 010 introduced one of the most important C++ and game-development concepts:
+
+    class
+
+Before this exercise, most code was built around standalone functions.
+
+With classes, we start grouping data and behavior together.
+
+For Ellen's Alien Game, each Alien object has:
+
+Data:
+    x_coordinate
+    y_coordinate
+    health
+
+Behavior:
+    get_health()
+    hit()
+    is_alive()
+    teleport()
+    collision_detection()
+
+This is the beginning of object-oriented programming in C++.
+
+============================================================
+3. CLASS VS OBJECT
+============================================================
+
+A class is a blueprint.
+
+Example:
+
+    class Alien
+    {
+        ...
+    };
+
+An object is a real instance created from that blueprint.
+
+Example:
+
+    Alien alien_1{10, 20};
+    Alien alien_2{15, 30};
+
+Mental model:
+
+    Alien class  -> blueprint
+    alien_1      -> one real alien object
+    alien_2      -> another real alien object
+
+Each object has its own data.
+
+Example:
+
+    alien_1.x_coordinate = 10
+    alien_1.y_coordinate = 20
+    alien_1.health       = 3
+
+    alien_2.x_coordinate = 15
+    alien_2.y_coordinate = 30
+    alien_2.health       = 3
+
+Changing alien_1 does not automatically change alien_2.
+
+This is a major OOP understanding.
+
+Unreal Engine comparison:
+
+    Enemy1 has its own health and location.
+    Enemy2 has its own health and location.
+    Player has its own health and location.
+
+Same blueprint, separate object states.
+
+============================================================
+4. CLASS MEMBERS: PRIVATE BY DEFAULT
+============================================================
+
+Important rule:
+
+    class members are private by default.
+    struct members are public by default.
+
+Example:
+
+    class Alien
+    {
+        int health;
+    };
+
+Here health is private by default.
+
+But we usually write access sections explicitly:
+
+    class Alien
+    {
+    private:
+        int health;
+
+    public:
+        int x_coordinate;
+        int y_coordinate;
+    };
+
+This makes the design clearer.
+
+============================================================
+5. PUBLIC VS PRIVATE
+============================================================
+
+Public members can be accessed from outside the object.
+
+Example:
+
+    alien.x_coordinate;
+    alien.y_coordinate;
+
+Private members cannot be directly accessed from outside the object.
+
+Example:
+
+    alien.health; // not allowed if health is private
+
+In this exercise:
+
+    x_coordinate -> public data member
+    y_coordinate -> public data member
+    health       -> private data member
+
+Why is health private?
+
+Because outside code should not directly decide or corrupt health.
+
+Bad design if health were public:
+
+    alien.health = -999;
+
+This breaks the game rule.
+
+Better design:
+
+    alien.hit();
+    alien.get_health();
+    alien.is_alive();
+
+This is called encapsulation.
+
+Mental model:
+
+    private data protects object rules.
+    public methods provide controlled behavior.
+
+============================================================
+6. DATA MEMBERS VS MEMBER FUNCTIONS
+============================================================
+
+Data members store object state.
+
+Examples:
+
+    int x_coordinate;
+    int y_coordinate;
+    int health;
+
+Member functions are behaviors inside the class.
+
+Examples:
+
+    get_health()
+    hit()
+    is_alive()
+    teleport()
+    collision_detection()
+
+Important wording correction:
+
+    health is not a private method.
+    health is a private data member / private field.
+
+Methods are functions.
+
+============================================================
+7. CONSTRUCTOR
+============================================================
+
+A constructor runs when an object is created.
+
+Example:
+
+    Alien alien{10, 20};
+
+This calls:
+
+    Alien(int x, int y)
+
+Your constructor:
+
+    Alien(int x, int y) : x_coordinate{x}, y_coordinate{y} {}
+
+This is called a constructor member initializer list.
+
+It initializes object data directly.
+
+Meaning:
+
+    x_coordinate gets x
+    y_coordinate gets y
+    health starts at 3
+
+For:
+
+    Alien alien{2, 0};
+
+Expected object state:
+
+    alien.x_coordinate -> 2
+    alien.y_coordinate -> 0
+    alien.get_health() -> 3
+
+Professional note:
+
+This style is modern and good:
+
+    Alien(int x, int y) : x_coordinate{x}, y_coordinate{y} {}
+
+============================================================
+8. WHY NOT set_health()?
+============================================================
+
+You considered adding:
+
+    set_health(int newValue)
+
+This was a good question.
+
+But for this exercise and for better OOP design, set_health() is not needed.
+
+Why?
+
+Because it gives outside code too much power.
+
+Example problem:
+
+    alien.set_health(-999);
+    alien.set_health(999999);
+
+This breaks the game rules.
+
+Better design:
+
+    alien.hit();       // controlled damage
+    alien.is_alive();  // controlled state check
+    alien.get_health();// controlled read
+
+Professional idea:
+
+    Do not expose direct mutation unless there is a strong reason.
+    Expose meaningful behavior.
+
+============================================================
+9. TASK 2 - hit()
+============================================================
+
+Rule:
+
+    hit() decreases health by 1.
+    health must not go below 0.
+    hit() returns true.
+
+Health flow:
+
+    health = 3
+    hit() -> 2
+    hit() -> 1
+    hit() -> 0
+    hit() -> still 0
+    hit() -> still 0
+
+Your first version repaired invalid state after it happened:
+
+    health--;
+    if (health < 0)
+        health = 0;
+
+Cleaner professional version prevents invalid state:
+
+    bool hit()
+    {
+        if (health > 0)
+            health--;
+
+        return true;
+    }
+
+Mental model:
+
+    Better to prevent invalid state than repair it afterward.
+
+============================================================
+10. TASK 3 - is_alive()
+============================================================
+
+Rule:
+
+    Alien is alive if health > 0.
+    Alien is not alive if health == 0.
+
+Clean function:
+
+    bool is_alive()
+    {
+        return health > 0;
+    }
+
+No need for:
+
+    if (health > 0)
+        return true;
+    else
+        return false;
+
+Direct boolean return is cleaner.
+
+This connects to Exercise 006 Pacman Rules.
+
+Pattern:
+
+    return condition;
+
+Output note:
+
+When printing bool with std::cout:
+
+    true  prints as 1
+    false prints as 0
+
+============================================================
+11. TASK 4 - teleport()
+============================================================
+
+Rule:
+
+    teleport updates x_coordinate and y_coordinate.
+    health does not change.
+    teleport returns true.
+
+Function:
+
+    bool teleport(int new_x, int new_y)
+    {
+        x_coordinate = new_x;
+        y_coordinate = new_y;
+        return true;
+    }
+
+Example:
+
+    Alien alien{5, 9};
+    alien.teleport(20, 30);
+
+After teleport:
+
+    alien.x_coordinate -> 20
+    alien.y_coordinate -> 30
+    alien.get_health() -> 3
+
+============================================================
+12. void VS bool
+============================================================
+
+You first wrote teleport as void.
+
+This is logically reasonable in real code when the function only performs an action and does not report anything back.
+
+C++ void means:
+
+    action only, no result returned
+
+But Exercism expects bool:
+
+    bool teleport(int new_x, int new_y)
+    {
+        x_coordinate = new_x;
+        y_coordinate = new_y;
+        return true;
+    }
+
+Important future game-development idea:
+
+    void = action only
+    bool = action plus success/failure result
+
+Your proactive thinking was correct.
+
+In a real game, teleport might fail if:
+
+    alien is dead
+    target position is outside the map
+    target position is blocked
+    teleport cooldown is active
+    alien is stunned
+
+Then bool becomes meaningful:
+
+    bool teleport(int new_x, int new_y)
+    {
+        if (!is_alive())
+            return false;
+
+        x_coordinate = new_x;
+        y_coordinate = new_y;
+        return true;
+    }
+
+For Exercism, teleport always returns true.
+
+============================================================
+13. TASK 5 - collision_detection()
+============================================================
+
+Rule:
+
+    If two aliens have the same x_coordinate and same y_coordinate, they collided.
+
+Important:
+
+    Both x and y must match.
+
+Example:
+
+    Alien alien_1{10, 20};
+    Alien alien_2{10, 20};
+    Alien alien_3{10, 30};
+
+Result:
+
+    alien_1.collision_detection(alien_2) -> true
+    alien_1.collision_detection(alien_3) -> false
+
+Because:
+
+    alien_1 -> x = 10, y = 20
+    alien_2 -> x = 10, y = 20
+
+Both same, so collision is true.
+
+But:
+
+    alien_3 -> x = 10, y = 30
+
+x is same but y is different, so collision is false.
+
+Your function:
+
+    bool collision_detection(const Alien& alien)
+    {
+        return alien.x_coordinate == x_coordinate &&
+               alien.y_coordinate == y_coordinate;
+    }
+
+This is correct.
+
+============================================================
+14. const Alien& PARAMETER
+============================================================
+
+You used:
+
+    const Alien& alien
+
+This is professional.
+
+Meaning:
+
+    const -> do not modify the other alien
+    &     -> do not copy the other alien
+
+So this parameter means:
+
+    read the other alien safely and efficiently
+
+Why not pass by value?
+
+    bool collision_detection(Alien alien)
+
+This would copy the entire Alien object.
+
+For small objects it may not matter much, but professional habit is:
+
+    pass objects by const reference when you only need to read them
+
+============================================================
+15. this->
+============================================================
+
+You used this earlier:
+
+    this->health
+    this->x_coordinate
+
+This is valid.
+
+Meaning:
+
+    this object's health
+    this object's x_coordinate
+
+Inside member functions, this is usually optional.
+
+These are equivalent:
+
+    this->health
+    health
+
+When is this-> useful?
+
+1. To make it explicit that the member belongs to the current object.
+2. When parameter names shadow member names.
+3. In templates later.
+
+For now:
+
+    health
+
+is clean enough.
+
+============================================================
+16. FUTURE PROFESSIONAL LAYER: const MEMBER FUNCTIONS
+============================================================
+
+Some functions only read object state and do not modify the object.
+
+Examples:
+
+    get_health()
+    is_alive()
+    collision_detection(...)
+
+Later, we can write them as const member functions:
+
+    int get_health() const
+    bool is_alive() const
+    bool collision_detection(const Alien& alien) const
+
+Meaning:
+
+    This function promises not to modify the current object.
+
+We did not deep dive yet because we should not lose focus.
+
+============================================================
+17. STATIC NOTE FOR LATER
+============================================================
+
+You remembered static.
+
+Good memory, but we intentionally did not deep dive.
+
+For now:
+
+    normal data member -> each object has its own copy
+    static data member -> class-level shared data
+
+Example:
+
+    alien_1.health -> belongs only to alien_1
+    alien_2.health -> belongs only to alien_2
+
+But:
+
+    Alien::alien_count -> would be shared by the Alien class itself
+
+We will deep dive later.
+
+============================================================
+18. COMMON MISTAKES TO AVOID
+============================================================
+
+1. Thinking private data cannot be read at all.
+   Correction: It cannot be read directly from outside, but it can be read through a public method.
+
+2. Calling health a private method.
+   Correction: health is a private data member. get_health() is a method.
+
+3. Adding set_health() too early.
+   Correction: Direct setters can break object rules. Prefer behavior methods like hit().
+
+4. Letting health go below 0.
+   Correction: Check health > 0 before decreasing.
+
+5. Using void when the exercise expects bool.
+   Correction: Exercism signatures must match exactly.
+
+6. Thinking collision means only x is same.
+   Correction: Collision requires x AND y to be the same.
+
+7. Copying the other Alien unnecessarily.
+   Correction: Use const Alien& when only reading.
+
+============================================================
+19. VBA EQUIVALENTS
+============================================================
+
+C++ class:
+    VBA Class Module
+
+C++ object:
+    VBA object instance created from a class
+
+private:
+    Private fields/members in VBA
+
+public:
+    Public methods/properties in VBA
+
+Constructor:
+    Similar idea to class initialization, though VBA uses Initialize event rather than C++ constructor syntax
+
+get_health():
+    Public Function GetHealth() As Integer
+
+hit():
+    Public Function Hit() As Boolean
+
+teleport():
+    Public Function Teleport(newX As Integer, newY As Integer) As Boolean
+
+void function:
+    VBA Sub
+
+bool function:
+    VBA Function As Boolean
+
+============================================================
+20. JAVASCRIPT EQUIVALENTS
+============================================================
+
+C++ class:
+
+    class Alien { ... }
+
+Object creation:
+
+    const alien = new Alien(10, 20);
+
+Private field:
+
+    #health = 3;
+
+Public fields:
+
+    this.x_coordinate
+    this.y_coordinate
+
+Method:
+
+    getHealth() { return this.#health; }
+
+Collision idea:
+
+    collisionDetection(otherAlien) {
+        return otherAlien.x_coordinate === this.x_coordinate &&
+               otherAlien.y_coordinate === this.y_coordinate;
+    }
+
+Difference:
+
+    C++ has stricter type rules.
+    C++ has stronger access control.
+    C++ object copying and references matter much more.
+
+============================================================
+21. UNREAL ENGINE CONNECTION
+============================================================
+
+This exercise directly connects to game development.
+
+In Unreal Engine:
+
+    Enemy
+    Player
+    Projectile
+    Item
+    Door
+
+are often objects/classes with their own state and behavior.
+
+Example:
+
+    Enemy health
+    Enemy location
+    Enemy take damage
+    Enemy is alive
+    Enemy teleport/move
+    Enemy collision check
+
+This exercise is a tiny version of that architecture.
+
+Important Unreal-style mental model:
+
+    Actor blueprint/class defines behavior.
+    Each spawned actor has its own position, health, state, and behavior.
+
+This is exactly what we practiced with Alien.
+
+============================================================
+22. WHAT SHOULD BE REMEMBERED
+============================================================
+
+1. Class is a blueprint.
+2. Object is a real instance.
+3. Each object owns its own data.
+4. Private data protects rules.
+5. Public methods provide controlled access.
+6. Constructor initializes object state.
+7. Member initializer list is modern and clean.
+8. hit() changes private health through controlled behavior.
+9. is_alive() returns a direct boolean condition.
+10. teleport() changes coordinates and returns success.
+11. bool return can support future failure logic.
+12. collision requires both x and y to match.
+13. const Alien& means read without copying and without modifying.
+14. this-> is valid but often optional.
+15. Later, const member functions will make read-only methods more professional.
+
+============================================================
+23. FINAL SUMMARY
+============================================================
+
+Exercise 010 introduced the first major object-oriented programming concept in the Exercism C++ track. The Alien class groups state and behavior together: coordinates and health are the state, while get_health(), hit(), is_alive(), teleport(), and collision_detection() are the behavior. The most important lesson is that each object owns its own data. Private health protects the game rule from outside corruption, while public methods provide controlled behavior. The exercise also introduced constructor initialization, encapsulation, bool-returning action methods, object-to-object comparison, const reference parameters, and the foundation for future game-development architecture in Unreal Engine.
