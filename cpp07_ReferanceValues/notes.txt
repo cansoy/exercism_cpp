@@ -1,0 +1,422 @@
+011 - Election Day Notes
+========================
+
+Confirmed Exercise
+------------------
+Exercise: 011 - Election Day
+Main concept: References
+Extra concepts practiced:
+- struct
+- copy vs reference
+- const reference
+- returning by value vs returning by reference
+- dangling reference
+- std::vector reference
+- std::max_element iterator
+- .h / .cpp separation
+- declaration vs definition
+- compilation and linking
+
+1. Struct
+---------
+A struct is a user-defined type, often used as a simple public data container.
+
+Example:
+
+struct ElectionResult
+{
+    std::string name{};
+    int votes{};
+};
+
+ElectionResult burr{"Aaron", 1801};
+
+Meaning:
+
+burr
+----------------
+name  = "Aaron"
+votes = 1801
+
+Important:
+In C++, struct members are public by default.
+
+VBA equivalent:
+
+Type ElectionResult
+    Name As String
+    Votes As Integer
+End Type
+
+JavaScript equivalent:
+
+const burr = {
+    name: "Aaron",
+    votes: 1801
+};
+
+2. Copy vs Reference
+--------------------
+
+ElectionResult result
+
+means:
+- A copy is created.
+- The function works with a new object.
+- Changes do not affect the original.
+
+ElectionResult& result
+
+means:
+- No new object is created.
+- result is another name for the original object.
+- Changes affect the original.
+
+Key sentence:
+
+Copy = new object.
+Reference = another name for the same object.
+
+3. const Reference
+------------------
+
+const ElectionResult& result
+
+means:
+- Borrow the original object.
+- Do not copy it.
+- Do not allow modification.
+
+Use this when the function only reads data.
+
+Example:
+
+int vote_count(const ElectionResult& result)
+{
+    return result.votes;
+}
+
+Why this is good:
+- Efficient for larger objects.
+- Protects the object from accidental modification.
+- Communicates intent clearly.
+
+4. Modifiable Reference
+-----------------------
+
+ElectionResult& result
+
+means:
+- Borrow the original object.
+- Allow modification.
+
+Use this when the function must change the caller's object.
+
+Example:
+
+void increment_vote_count(ElectionResult& result, int additional_votes)
+{
+    result.votes += additional_votes;
+}
+
+If this used a copy instead, the original vote count would not change.
+
+5. Returning by Value vs Returning by Reference
+----------------------------------------------
+
+Safe:
+
+ElectionResult get_result()
+{
+    ElectionResult result{"Pedro", 471};
+    return result;
+}
+
+Why safe:
+- The function returns by value.
+- The caller receives a valid object.
+- Returning a local object by value is safe.
+
+Unsafe:
+
+ElectionResult& get_result()
+{
+    ElectionResult result{"Pedro", 471};
+    return result;
+}
+
+Why unsafe:
+- result is a local variable.
+- It is destroyed when the function ends.
+- Returning ElectionResult& gives the caller a reference to a destroyed object.
+- This is a dangling reference.
+
+Key rule:
+
+Returning by value can safely return a local object.
+Returning by reference must never return a local object.
+
+6. determine_result
+-------------------
+
+Purpose:
+- Receive the real vector.
+- Find the real winner inside the vector.
+- Modify the winner's name by prefixing "President ".
+- Return the real winner, not a copy.
+
+Correct function shape:
+
+ElectionResult& determine_result(std::vector<ElectionResult>& results)
+
+Why std::vector<ElectionResult>&?
+- The function must modify an element inside the vector.
+- const std::vector<ElectionResult>& would not allow modification.
+- Passing by value would create a copy of the vector, which is not what the task wants.
+
+Good implementation idea:
+
+ElectionResult& determine_result(std::vector<ElectionResult>& results)
+{
+    auto winner = std::max_element(
+        results.begin(),
+        results.end(),
+        [](const ElectionResult& first, const ElectionResult& second)
+        {
+            return first.votes < second.votes;
+        }
+    );
+
+    winner->name = "President " + winner->name;
+
+    return *winner;
+}
+
+Important:
+std::max_element returns an iterator.
+The iterator points to the real element inside the vector.
+winner->name accesses the name member through the iterator.
+*winner gives the actual ElectionResult object.
+
+7. winner->name
+---------------
+
+winner->name
+
+means:
+
+Access the name member of the object that the iterator/pointer winner points to.
+
+It is similar to:
+
+(*winner).name
+
+The arrow operator is a shortcut.
+
+8. Declaration vs Definition
+----------------------------
+
+Declaration:
+Says what exists.
+
+Example in election_day.h:
+
+int vote_count(const ElectionResult& result);
+
+Definition:
+Says how it works.
+
+Example in election_day.cpp:
+
+int vote_count(const ElectionResult& result)
+{
+    return result.votes;
+}
+
+Simple memory:
+
+.h   = declaration / interface / what exists
+.cpp = definition / implementation / how it works
+
+9. Header and Source Structure
+------------------------------
+
+Professional structure:
+
+main.cpp
+    Uses the code.
+
+election_day.h
+    Declares the struct and function signatures.
+
+election_day.cpp
+    Defines the function bodies.
+
+Important rule:
+
+.h files are included.
+.cpp files are compiled.
+
+Correct compile command:
+
+g++ -std=c++20 -Wall -Wextra -pedantic main.cpp election_day.cpp -o main
+
+Why main.cpp alone may fail:
+
+g++ main.cpp -o main
+
+main.cpp sees the declarations from election_day.h, but the linker cannot find the function definitions from election_day.cpp.
+
+Typical error:
+
+undefined reference
+
+Meaning:
+The function was declared, but its compiled definition was not linked.
+
+10. Professional C++ Questions
+------------------------------
+
+Before using or returning a reference, ask:
+
+- Who owns this object?
+- How long does it live?
+- Can this function modify it?
+- Am I returning a reference to something that still exists?
+- Is this a copy or the original?
+- Should this be const?
+- Is this object allowed to be changed by this function?
+
+11. Common Mistakes
+-------------------
+
+Mistake 1:
+Returning a reference to a local variable.
+
+ElectionResult& bad()
+{
+    ElectionResult result{"Pedro", 471};
+    return result;
+}
+
+Mistake 2:
+Using const reference when the function must modify the object.
+
+ElectionResult& determine_result(const std::vector<ElectionResult>& results)
+
+Mistake 3:
+Copying the winner instead of returning the real vector element.
+
+ElectionResult winner = *std::max_element(...);
+return winner;
+
+Mistake 4:
+Using std::endl when '
+' is enough.
+
+std::cout << value << std::endl; // flushes output
+std::cout << value << '\n';     // usually enough
+
+12. VBA Equivalent
+------------------
+
+ByVal = copy
+ByRef = reference / original
+
+Example:
+
+Sub IncrementVoteCount(ByRef result As ElectionResult, ByVal additionalVotes As Integer)
+    result.Votes = result.Votes + additionalVotes
+End Sub
+
+C++ adds stronger const control:
+
+const ElectionResult& result
+
+means:
+ByRef-like efficiency, but read-only.
+
+13. JavaScript Equivalent
+-------------------------
+
+Objects are reference-like:
+
+const burr = {
+    name: "Aaron",
+    votes: 1801
+};
+
+function incrementVoteCount(result, additionalVotes) {
+    result.votes += additionalVotes;
+}
+
+incrementVoteCount(burr, 3);
+
+console.log(burr.votes); // 1804
+
+Difference:
+JavaScript does not force you to declare read-only or modifiable intent.
+C++ makes this explicit with &, const &, and value parameters.
+
+14. What Was Learned
+--------------------
+
+- References allow functions to work with original objects.
+- const references allow efficient read-only access.
+- Modifiable references allow functions to update original objects.
+- Returning by value can safely return local objects.
+- Returning by reference must never return local objects.
+- std::max_element returns an iterator to the real element.
+- .h files declare, .cpp files define.
+- g++ must compile/link all required .cpp files.
+
+15. What Should Be Remembered
+-----------------------------
+
+The most important rule:
+
+Returning by value can safely return a local object.
+Returning by reference must never return a local object.
+
+The most important parameter pattern:
+
+ElectionResult result
+    copy
+
+ElectionResult& result
+    original, modifiable
+
+const ElectionResult& result
+    original, read-only
+
+16. Common Mistake to Avoid
+---------------------------
+
+Do not create a local copy when the task asks for the original object.
+
+Bad idea:
+
+ElectionResult winner = *iterator;
+return winner;
+
+Good idea:
+
+return *iterator;
+
+17. Professional Habit
+---------------------
+
+Do not ask only:
+Does this code work?
+
+Ask:
+- Is this a copy or reference?
+- Who owns the object?
+- How long does it live?
+- Can this function modify it?
+- Is the returned reference safe?
+- Is the interface clear from the header?
+- Are all needed .cpp files compiled and linked?
+
+End of Notes
+------------
