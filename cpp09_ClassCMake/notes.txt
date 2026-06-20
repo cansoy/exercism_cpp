@@ -1,0 +1,851 @@
+Exercise 013 - Doctor Data
+Concepts: Header Files, Source Files, Classes, Namespaces, enum class, const member functions
+
+============================================================
+1. Main Idea
+============================================================
+
+This exercise teaches how C++ separates declarations from definitions.
+
+doctor_data.h
+    What exists?
+    Public API / declarations / class shape / function signatures
+
+doctor_data.cpp
+    How does it work?
+    Implementations / function bodies / constructor bodies
+
+The test file is the specification. We recover the needed code by reading how the test uses names.
+
+Examples:
+
+    heaven::Vessel bob{"Robert Johansson", 1};
+
+This tells us:
+    - There is a namespace named heaven.
+    - There is a class named Vessel.
+    - Vessel has a constructor.
+    - Constructor accepts a string and an int.
+
+Example:
+
+    bob.generation
+
+This tells us:
+    - generation is a public member variable.
+    - It is not a function because there are no parentheses.
+
+Example:
+
+    bob.replicate("Mario")
+
+This tells us:
+    - replicate is a member function.
+    - It belongs to Vessel because it is called with dot notation.
+
+Example:
+
+    heaven::in_the_same_system(marv, milo)
+
+This tells us:
+    - in_the_same_system is not a member function.
+    - It is a free function inside namespace heaven.
+
+============================================================
+2. Header File Mental Model
+============================================================
+
+Header file = public contract.
+
+It tells other files what names, types, classes, and functions exist.
+
+A header file usually contains:
+
+    - include guards
+    - required includes
+    - namespace declarations
+    - enum declarations
+    - class declarations
+    - member variable declarations
+    - function declarations
+
+Clean header example:
+
+    #ifndef DOCTOR_DATA_H
+    #define DOCTOR_DATA_H
+
+    #include <string>
+
+    namespace star_map
+    {
+        enum class System
+        {
+            BetaHydri,
+            Sol,
+            EpsilonEridani,
+            AlphaCentauri,
+            DeltaEridani,
+            Omicron2Eridani
+        };
+    }
+
+    namespace heaven
+    {
+        class Vessel
+        {
+        public:
+            std::string name{};
+            int generation{};
+            star_map::System current_system{star_map::System::Sol};
+            int busters{0};
+
+            Vessel(std::string name, int generation, star_map::System current_system = star_map::System::Sol);
+
+            Vessel replicate(std::string new_name) const;
+            void make_buster();
+            bool shoot_buster();
+        };
+
+        bool in_the_same_system(const Vessel& first, const Vessel& second);
+        std::string get_older_bob(const Vessel& first, const Vessel& second);
+    }
+
+    #endif
+
+============================================================
+3. Include Guards
+============================================================
+
+Include guards prevent the same header content from being included more than once in one translation unit.
+
+Pattern:
+
+    #ifndef DOCTOR_DATA_H
+    #define DOCTOR_DATA_H
+
+    // declarations
+
+    #endif
+
+Meaning:
+
+    If DOCTOR_DATA_H is not defined yet:
+        define it
+        include this header content
+
+    If it was already defined:
+        skip this file content
+
+This prevents duplicate class/enum/function declaration problems.
+
+#pragma once can also be used, but include guards are explicit and good for learning.
+
+============================================================
+4. Required Includes
+============================================================
+
+We include:
+
+    #include <string>
+
+because the header uses:
+
+    std::string
+
+Do not include:
+
+    #include <iostream>
+
+unless the file uses:
+
+    std::cout
+    std::cin
+    std::cerr
+
+Professional habit:
+    Include only what the file needs.
+
+============================================================
+5. Namespaces
+============================================================
+
+The exercise expects two namespaces:
+
+    star_map
+    heaven
+
+star_map contains the System enum:
+
+    star_map::System::Sol
+    star_map::System::BetaHydri
+
+heaven contains Vessel and related functions:
+
+    heaven::Vessel
+    heaven::in_the_same_system
+    heaven::get_older_bob
+
+Scope chain example:
+
+    star_map::System::DeltaEridani
+
+Meaning:
+
+    inside star_map
+        find System
+            inside System
+                find DeltaEridani
+
+============================================================
+6. enum class System
+============================================================
+
+enum class is used when we have a fixed set of valid values.
+
+Example:
+
+    enum class System
+    {
+        BetaHydri,
+        Sol,
+        EpsilonEridani,
+        AlphaCentauri,
+        DeltaEridani,
+        Omicron2Eridani
+    };
+
+This is safer than strings:
+
+    "Sol"
+    "sol"
+    "Soll"
+
+Strings are typo-prone.
+
+With enum class, the compiler checks the value.
+
+============================================================
+7. Class Vessel
+============================================================
+
+Vessel is a class inside namespace heaven.
+
+It has public member variables because the tests access them directly:
+
+    bob.name
+    bob.generation
+    bob.current_system
+    bob.busters
+
+If the test uses dot without parentheses, it is a variable:
+
+    bob.generation
+
+If the test uses parentheses, it is a function:
+
+    bob.replicate("Mario")
+    bob.make_buster()
+    bob.shoot_buster()
+
+============================================================
+8. Constructor Parameter vs Member Variable
+============================================================
+
+Constructor parameters are temporary input values.
+
+Example:
+
+    Vessel(std::string name, int generation, star_map::System current_system)
+
+These parameters live only during the constructor call.
+
+Member variables live inside the object:
+
+    std::string name{};
+    int generation{};
+    star_map::System current_system{star_map::System::Sol};
+
+The constructor uses input parameters to initialize member variables.
+
+============================================================
+9. Source File Mental Model
+============================================================
+
+Source file = implementation.
+
+It includes the header:
+
+    #include "../header/doctor_data.h"
+
+or, if the files are in the same folder:
+
+    #include "doctor_data.h"
+
+Then it defines the functions declared in the header.
+
+Clean source example:
+
+    #include "../header/doctor_data.h"
+
+    namespace heaven
+    {
+        Vessel::Vessel(std::string name,
+                       int generation,
+                       star_map::System current_system)
+            : name{name},
+              generation{generation},
+              current_system{current_system}
+        {
+        }
+
+        Vessel Vessel::replicate(std::string new_name) const
+        {
+            return Vessel(new_name, generation + 1, current_system);
+        }
+
+        void Vessel::make_buster()
+        {
+            ++busters;
+        }
+
+        bool Vessel::shoot_buster()
+        {
+            if (busters > 0)
+            {
+                --busters;
+                return true;
+            }
+
+            return false;
+        }
+
+        bool in_the_same_system(const Vessel& first, const Vessel& second)
+        {
+            return first.current_system == second.current_system;
+        }
+
+        std::string get_older_bob(const Vessel& first, const Vessel& second)
+        {
+            return first.generation < second.generation ? first.name : second.name;
+        }
+    }
+
+============================================================
+10. Member Initializer List
+============================================================
+
+Constructor implementation:
+
+    Vessel::Vessel(std::string name,
+                   int generation,
+                   star_map::System current_system)
+        : name{name},
+          generation{generation},
+          current_system{current_system}
+    {
+    }
+
+This initializes the member variables directly.
+
+Meaning:
+
+    member name           <- parameter name
+    member generation     <- parameter generation
+    member current_system <- parameter current_system
+
+This is preferred over assigning inside the constructor body.
+
+============================================================
+11. replicate()
+============================================================
+
+Declaration:
+
+    Vessel replicate(std::string new_name) const;
+
+Implementation:
+
+    Vessel Vessel::replicate(std::string new_name) const
+    {
+        return Vessel(new_name, generation + 1, current_system);
+    }
+
+Meaning:
+
+    Create a new Vessel.
+    Use the new name.
+    Use current generation + 1.
+    Keep the same current system.
+    Do not modify the original Vessel.
+
+Example:
+
+    heaven::Vessel bob{"Robert Johansson", 1};
+    heaven::Vessel bob5 = bob.replicate("Mario");
+
+Result:
+
+    bob.name        = "Robert Johansson"
+    bob.generation  = 1
+
+    bob5.name       = "Mario"
+    bob5.generation = 2
+
+============================================================
+12. const Member Function
+============================================================
+
+This:
+
+    Vessel replicate(std::string new_name) const;
+
+means:
+
+    replicate may read the current object.
+    replicate may create a new object.
+    replicate may not modify the current object.
+
+Inside a const member function, this would be wrong:
+
+    ++generation;
+
+because it changes the current object.
+
+This is allowed:
+
+    return Vessel(new_name, generation + 1, current_system);
+
+because it only reads the current object.
+
+============================================================
+13. make_buster()
+============================================================
+
+Declaration:
+
+    void make_buster();
+
+Implementation:
+
+    void Vessel::make_buster()
+    {
+        ++busters;
+    }
+
+Meaning:
+
+    Increase the current object's busters by 1.
+
+It returns void because the action simply changes object state and does not need to report success/failure.
+
+============================================================
+14. shoot_buster()
+============================================================
+
+Declaration:
+
+    bool shoot_buster();
+
+Implementation:
+
+    bool Vessel::shoot_buster()
+    {
+        if (busters > 0)
+        {
+            --busters;
+            return true;
+        }
+
+        return false;
+    }
+
+Meaning:
+
+    If there is at least one buster:
+        shoot one
+        decrease busters
+        return true
+
+    If there are no busters:
+        do not decrease below zero
+        return false
+
+Important invariant:
+
+    busters should never become negative.
+
+Dangerous version:
+
+    --busters;
+    return busters >= 0;
+
+If busters starts at 0, this makes busters -1.
+That corrupts the object state.
+
+============================================================
+15. Free Functions Inside Namespace
+============================================================
+
+These are free functions, not member functions:
+
+    heaven::in_the_same_system(marv, milo)
+    heaven::get_older_bob(bob1, marv)
+
+They are called from the namespace, not from an object.
+
+Member function style:
+
+    bob.replicate("Mario")
+
+Free function style:
+
+    heaven::in_the_same_system(marv, milo)
+
+============================================================
+16. const Vessel&
+============================================================
+
+Function declarations:
+
+    bool in_the_same_system(const Vessel& first, const Vessel& second);
+    std::string get_older_bob(const Vessel& first, const Vessel& second);
+
+const Vessel& means:
+
+    borrow the existing object
+    do not copy it
+    do not modify it
+
+This connects to Exercise 011 references.
+
+Plain Vessel would make a copy.
+
+Vessel& would allow modification.
+
+const Vessel& is best here because these functions only read.
+
+============================================================
+17. in_the_same_system()
+============================================================
+
+Implementation:
+
+    bool in_the_same_system(const Vessel& first, const Vessel& second)
+    {
+        return first.current_system == second.current_system;
+    }
+
+Because this is a free function, there is no hidden this object.
+
+So we access data through parameters:
+
+    first.current_system
+    second.current_system
+
+============================================================
+18. get_older_bob()
+============================================================
+
+Implementation:
+
+    std::string get_older_bob(const Vessel& first, const Vessel& second)
+    {
+        return first.generation < second.generation ? first.name : second.name;
+    }
+
+Meaning:
+
+    Compare generation numbers.
+    Return the name of the older Vessel.
+
+In this exercise:
+
+    generation 1 is older than generation 2
+    lower generation number = older
+
+So we use:
+
+    first.generation < second.generation
+
+not:
+
+    first.generation > second.generation
+
+============================================================
+19. CMakeLists.txt
+============================================================
+
+Simple CMake file for a tiny local practice project:
+
+    cmake_minimum_required(VERSION 3.16)
+
+    project(doctor_data)
+
+    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+    add_executable(doctor_data
+        main.cpp
+        src/doctor_data.cpp
+    )
+
+This assumes folder structure:
+
+    013_doctor_data/
+    ├── CMakeLists.txt
+    ├── main.cpp
+    ├── header/
+    │   └── doctor_data.h
+    └── src/
+        └── doctor_data.cpp
+
+If doctor_data.h and doctor_data.cpp are in the same folder as main.cpp, use:
+
+    add_executable(doctor_data
+        main.cpp
+        doctor_data.cpp
+    )
+
+============================================================
+20. CMake Commands
+============================================================
+
+From the project root folder:
+
+    mkdir -p build
+    cd build
+    cmake ..
+    cmake --build .
+    ./doctor_data
+
+Explanation:
+
+    mkdir -p build
+        Create a build folder if it does not exist.
+
+    cd build
+        Enter the build folder.
+
+    cmake ..
+        Configure the project using the CMakeLists.txt from the parent folder.
+
+    cmake --build .
+        Compile/build the project.
+
+    ./doctor_data
+        Run the executable.
+
+Clean rebuild:
+
+    rm -rf build
+    mkdir build
+    cd build
+    cmake ..
+    cmake --build .
+    ./doctor_data
+
+From inside build folder, rebuild after editing code:
+
+    cmake --build .
+    ./doctor_data
+
+============================================================
+21. Common Mistakes
+============================================================
+
+Mistake 1:
+Putting implementation in the header unnecessarily.
+
+Header should declare.
+Source should define.
+
+Mistake 2:
+Forgetting that default arguments belong in the header declaration.
+
+Correct:
+
+    Vessel(std::string name, int generation, star_map::System current_system = star_map::System::Sol);
+
+Mistake 3:
+Making a member variable into a function accidentally.
+
+Wrong if the test expects bob.generation:
+
+    int generation();
+
+Correct:
+
+    int generation{};
+
+Mistake 4:
+Changing the original object in replicate.
+
+Wrong:
+
+    ++generation;
+    return Vessel(new_name, generation, current_system);
+
+Correct:
+
+    return Vessel(new_name, generation + 1, current_system);
+
+Mistake 5:
+Allowing busters to become negative.
+
+Wrong:
+
+    --busters;
+    return busters >= 0;
+
+Correct:
+
+    if (busters > 0)
+    {
+        --busters;
+        return true;
+    }
+
+    return false;
+
+Mistake 6:
+Using pass-by-value unnecessarily.
+
+Less ideal:
+
+    bool in_the_same_system(Vessel first, Vessel second);
+
+Better:
+
+    bool in_the_same_system(const Vessel& first, const Vessel& second);
+
+============================================================
+22. VBA Equivalent
+============================================================
+
+VBA comparison:
+
+    .h file:
+        similar to public function signatures and public class members
+
+    .cpp file:
+        similar to actual Sub/Function implementation body
+
+VBA class module idea:
+
+    Public Name As String
+    Public Generation As Integer
+
+C++ equivalent:
+
+    std::string name{};
+    int generation{};
+
+VBA does not have the same header/source split as C++.
+C++ uses this split because compilation and linking work differently.
+
+============================================================
+23. JavaScript / Node.js Equivalent
+============================================================
+
+JavaScript might have:
+
+    class Vessel {
+      constructor(name, generation, currentSystem = "Sol") {
+        this.name = name;
+        this.generation = generation;
+        this.currentSystem = currentSystem;
+        this.busters = 0;
+      }
+
+      replicate(newName) {
+        return new Vessel(newName, this.generation + 1, this.currentSystem);
+      }
+    }
+
+But JavaScript does not require separate declaration and definition files like C++.
+
+TypeScript has interfaces/type declarations, which are closer to C++ headers conceptually.
+
+============================================================
+24. What Was Learned
+============================================================
+
+- Header files declare what exists.
+- Source files define how it works.
+- Include guards prevent repeated header inclusion.
+- Include only what the header needs.
+- enum class represents fixed valid values.
+- Namespaces organize names.
+- Class member variables store object state.
+- Constructor parameters are temporary inputs.
+- Member initializer lists initialize object state.
+- const member functions protect the current object.
+- const references avoid copies and prevent modification.
+- Free functions belong to a namespace, not an object.
+- Test code can reveal the required API.
+
+============================================================
+25. What Should Be Remembered
+============================================================
+
+Header:
+    public contract
+
+Source:
+    implementation
+
+Test:
+    specification
+
+Dot without parentheses:
+    public member variable
+
+Dot with parentheses:
+    member function
+
+Namespace function:
+    free function inside namespace
+
+const after member function:
+    does not modify this object
+
+const Vessel&:
+    borrow safely, no copy, no modification
+
+============================================================
+26. Final Mental Model
+============================================================
+
+doctor_data.h asks:
+
+    What names/types/functions/classes exist?
+
+doctor_data.cpp asks:
+
+    How do those functions/classes behave?
+
+Constructor asks:
+
+    How is the object born?
+
+Member variable asks:
+
+    What state does the object store?
+
+Member function asks:
+
+    What can this object do?
+
+Free function asks:
+
+    What operation exists in this namespace?
+
+============================================================
+Exercise Status
+============================================================
+
+Exercise 013 - Doctor Data completed conceptually.
+
+Next exercise:
+    014 - Lasagna Master
+    Concepts: Advanced Functions, Parameters
