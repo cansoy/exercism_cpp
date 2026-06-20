@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/doctor_data.dir/main.cpp.o CMakeFiles/doctor_data.dir/src/doctor_data.cpp.o -o doctor_data 
