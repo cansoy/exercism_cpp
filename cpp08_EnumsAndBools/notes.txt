@@ -1,0 +1,497 @@
+Exercise 012 - Troll the Trolls
+Concepts: enum class, scope resolution, boolean logic, header/source separation
+
+============================================================
+1. Main Idea
+============================================================
+
+This exercise taught how to represent a fixed set of valid states using enum class.
+
+Instead of using strings such as:
+
+    "guest"
+    "user"
+    "mod"
+    "troll"
+
+we use strongly typed enum values:
+
+    AccountStatus::guest
+    AccountStatus::user
+    AccountStatus::mod
+    AccountStatus::troll
+
+This is safer because the compiler can check the values.
+
+Use enum class when a variable should only be one of a limited set of options.
+
+================================================------------
+2. enum class
+================================================------------
+
+Example:
+
+    enum class AccountStatus
+    {
+        troll,
+        guest,
+        user,
+        mod
+    };
+
+    enum class Action
+    {
+        read,
+        write,
+        remove
+    };
+
+Meaning:
+
+    AccountStatus can only be:
+        troll, guest, user, mod
+
+    Action can only be:
+        read, write, remove
+
+This is better than magic numbers or strings.
+
+Bad:
+
+    int status = 2;
+    std::string status = "guest";
+
+Better:
+
+    AccountStatus status{AccountStatus::guest};
+
+================================================------------
+3. Scope Resolution Operator ::
+================================================------------
+
+The :: operator means "look inside this scope".
+
+Example:
+
+    AccountStatus::troll
+
+means:
+
+    troll belongs to AccountStatus.
+
+This is similar to namespace usage:
+
+    hellmath::display_post()
+
+means:
+
+    display_post belongs to hellmath namespace.
+
+================================================------------
+4. Header File Structure
+============================================================
+
+Header file should contain declarations and public types.
+
+Example enum.h:
+
+    #ifndef ENUM_H
+    #define ENUM_H
+
+    namespace hellmath
+    {
+        enum class AccountStatus
+        {
+            troll,
+            guest,
+            user,
+            mod
+        };
+
+        enum class Action
+        {
+            read,
+            write,
+            remove
+        };
+
+        bool display_post(AccountStatus poster, AccountStatus viewer);
+        bool permission_check(Action action, AccountStatus status);
+        bool valid_player_combination(AccountStatus player1, AccountStatus player2);
+        bool has_priority(AccountStatus account1, AccountStatus account2);
+    }
+
+    #endif
+
+Important:
+- Do not include unused headers.
+- Avoid exposing helper functions in the header if they are only used inside the .cpp file.
+- The header is the public API of the file.
+
+================================================------------
+5. Source File Structure
+============================================================
+
+Source file contains function definitions.
+
+Example enum.cpp:
+
+    #include "./enum.h"
+
+    namespace
+    {
+        int priority(hellmath::AccountStatus status)
+        {
+            if (status == hellmath::AccountStatus::troll)
+            {
+                return 0;
+            }
+
+            if (status == hellmath::AccountStatus::guest)
+            {
+                return 1;
+            }
+
+            if (status == hellmath::AccountStatus::user)
+            {
+                return 2;
+            }
+
+            if (status == hellmath::AccountStatus::mod)
+            {
+                return 3;
+            }
+
+            return -1;
+        }
+    }
+
+    namespace hellmath
+    {
+        bool display_post(AccountStatus poster, AccountStatus viewer)
+        {
+            if (poster == AccountStatus::troll)
+            {
+                return viewer == AccountStatus::troll;
+            }
+
+            return true;
+        }
+
+        bool permission_check(Action action, AccountStatus status)
+        {
+            if (status == AccountStatus::guest)
+            {
+                return action == Action::read;
+            }
+
+            if (status == AccountStatus::user || status == AccountStatus::troll)
+            {
+                return action == Action::read || action == Action::write;
+            }
+
+            if (status == AccountStatus::mod)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        bool valid_player_combination(AccountStatus player1, AccountStatus player2)
+        {
+            if (player1 == AccountStatus::guest || player2 == AccountStatus::guest)
+            {
+                return false;
+            }
+
+            if (player1 == AccountStatus::troll || player2 == AccountStatus::troll)
+            {
+                return player1 == AccountStatus::troll && player2 == AccountStatus::troll;
+            }
+
+            return true;
+        }
+
+        bool has_priority(AccountStatus account1, AccountStatus account2)
+        {
+            return priority(account1) > priority(account2);
+        }
+    }
+
+================================================------------
+6. Anonymous Namespace
+============================================================
+
+This:
+
+    namespace
+    {
+        int priority(...)
+        {
+            ...
+        }
+    }
+
+means the helper function belongs only to this .cpp file.
+
+Use this when a helper function is not part of the public API.
+
+This keeps the header clean.
+
+Public API:
+    display_post
+    permission_check
+    valid_player_combination
+    has_priority
+
+Private helper:
+    priority
+
+================================================------------
+7. Boolean Logic Lessons
+============================================================
+
+When logic becomes complicated, do not immediately write a long condition.
+
+Use this order:
+
+1. Translate the rule into plain English.
+2. Reject invalid cases first.
+3. Handle special cases second.
+4. Return the normal/default case last.
+5. Test both directions if the function has two inputs.
+6. Use helper functions when a rule has meaning.
+
+Example:
+
+Rule:
+    Guests cannot play.
+    Trolls can only play with trolls.
+    Everyone else can play.
+
+Clean code:
+
+    bool valid_player_combination(AccountStatus player1, AccountStatus player2)
+    {
+        if (player1 == AccountStatus::guest || player2 == AccountStatus::guest)
+        {
+            return false;
+        }
+
+        if (player1 == AccountStatus::troll || player2 == AccountStatus::troll)
+        {
+            return player1 == AccountStatus::troll && player2 == AccountStatus::troll;
+        }
+
+        return true;
+    }
+
+This is better than trying to list every possible valid pair manually.
+
+================================================------------
+8. Strict Comparison
+============================================================
+
+This means strictly higher:
+
+    >
+
+This means higher or equal:
+
+    >=
+
+For has_priority, the rule says:
+
+    account1 must have strictly higher priority than account2.
+
+So this is correct:
+
+    return priority(account1) > priority(account2);
+
+This would be wrong:
+
+    return priority(account1) >= priority(account2);
+
+because equal priority should return false.
+
+Example:
+
+    has_priority(AccountStatus::user, AccountStatus::user);
+
+must return:
+
+    false
+
+================================================------------
+9. Avoid Unnecessary Ternary
+============================================================
+
+Do not write:
+
+    return condition ? true : false;
+
+Because condition is already true or false.
+
+Better:
+
+    return condition;
+
+Example:
+
+    return priority(account1) > priority(account2);
+
+================================================------------
+10. Common Mistakes
+============================================================
+
+Mistake 1:
+Checking only one player when the rule involves two players.
+
+Bad:
+
+    if (player1 == AccountStatus::guest)
+    {
+        return false;
+    }
+
+Better:
+
+    if (player1 == AccountStatus::guest || player2 == AccountStatus::guest)
+    {
+        return false;
+    }
+
+Mistake 2:
+Using >= when the rule says strictly higher.
+
+Bad:
+
+    return priority(account1) >= priority(account2);
+
+Better:
+
+    return priority(account1) > priority(account2);
+
+Mistake 3:
+Using strings instead of enum class.
+
+Bad:
+
+    std::string status = "guest";
+
+Better:
+
+    AccountStatus status{AccountStatus::guest};
+
+Mistake 4:
+Exposing private helper functions in the header.
+
+Bad:
+
+    int priority(AccountStatus status); // if only used internally
+
+Better:
+Place it inside enum.cpp inside an anonymous namespace.
+
+================================================------------
+11. VBA Equivalent
+============================================================
+
+VBA has Enum:
+
+    Enum AccountStatus
+        troll = 0
+        guest = 1
+        user = 2
+        mod = 3
+    End Enum
+
+But C++ enum class is stricter.
+
+In C++, AccountStatus values do not freely mix with integers unless explicitly converted.
+
+This gives better type safety.
+
+================================================------------
+12. JavaScript Equivalent
+============================================================
+
+JavaScript might use an object:
+
+    const AccountStatus = {
+      troll: "troll",
+      guest: "guest",
+      user: "user",
+      mod: "mod"
+    };
+
+But JavaScript does not enforce this strongly by default.
+
+C++ enum class gives compiler-level protection.
+
+================================================------------
+13. What Was Learned
+============================================================
+
+- How to define enum class
+- How to use scoped enum values with ::
+- Why enum class is safer than strings or integers
+- How to write boolean rule functions
+- How to simplify true/false returns
+- How to use helper functions
+- How to separate .h and .cpp files
+- How to keep headers clean
+- How to make helper functions private to a .cpp file with anonymous namespace
+
+================================================------------
+14. What Should Be Remembered
+============================================================
+
+Use enum class for fixed allowed states.
+
+Return boolean expressions directly.
+
+Check all inputs involved in a rule.
+
+Use invalid-case-first logic to simplify complex conditions.
+
+Use helper functions when they make the main rule easier to read.
+
+Keep public declarations in the header.
+
+Keep private helpers in the .cpp file.
+
+============================================================
+15. Final Mental Model
+============================================================
+
+enum class:
+    safer named choices
+
+:::
+    look inside this scope
+
+header file:
+    public API / declarations
+
+source file:
+    implementation / definitions
+
+anonymous namespace:
+    private-to-this-file helper functions
+
+boolean rule design:
+    invalid cases first
+    special cases second
+    normal/default case last
+
+============================================================
+Exercise Status
+============================================================
+
+Exercise 012 - Troll the Trolls completed conceptually.
+
+Next exercise:
+    013 - Doctor Data
+    Concept: Header Files
