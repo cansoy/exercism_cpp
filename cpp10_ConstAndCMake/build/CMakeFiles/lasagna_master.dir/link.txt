@@ -1,0 +1,1 @@
+/usr/bin/c++ -g CMakeFiles/lasagna_master.dir/main.cpp.o CMakeFiles/lasagna_master.dir/src/lasagna_master.cpp.o -o lasagna_master 

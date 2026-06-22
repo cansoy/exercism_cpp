@@ -1,3 +1,0 @@
-/home/cansoy/Desktop/test/build/CMakeFiles/doctor_data.dir
-/home/cansoy/Desktop/test/build/CMakeFiles/edit_cache.dir
-/home/cansoy/Desktop/test/build/CMakeFiles/rebuild_cache.dir

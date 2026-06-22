@@ -1,0 +1,3 @@
+/home/cansoy/Desktop/lasagna/build/CMakeFiles/lasagna_master.dir
+/home/cansoy/Desktop/lasagna/build/CMakeFiles/edit_cache.dir
+/home/cansoy/Desktop/lasagna/build/CMakeFiles/rebuild_cache.dir

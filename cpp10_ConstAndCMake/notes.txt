@@ -1,0 +1,594 @@
+Exercise 014 - Lasagna Master Notes
+====================================
+
+Status
+------
+Completed and tested locally with CMake.
+
+Exercise focus
+--------------
+Main concepts:
+- Advanced function parameters
+- Declaration vs definition
+- Header/source separation
+- Default arguments
+- const correctness
+- Passing by value, reference, and const reference
+- Returning a new object vs modifying an existing object
+- Function overloading
+- std::vector
+- std::string
+- struct as a simple data container
+
+
+Project structure used
+----------------------
+lasagna/
+  CMakeLists.txt
+  main.cpp
+  include/
+    lasagna_master.h
+  src/
+    lasagna_master.cpp
+  build/
+
+Meaning:
+- include/lasagna_master.h contains declarations and public API.
+- src/lasagna_master.cpp contains implementations.
+- main.cpp is used for manual testing.
+- CMakeLists.txt tells CMake which files to compile and where headers live.
+
+
+CMake commands used
+-------------------
+Configure project:
+
+  cmake -S . -B build
+
+Build project:
+
+  cmake --build build
+
+Run executable:
+
+  ./build/lasagna_master
+
+
+CMakeLists.txt used
+-------------------
+cmake_minimum_required(VERSION 3.20)
+
+project(lasagna_master)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_executable(
+    lasagna_master
+    main.cpp
+    src/lasagna_master.cpp
+)
+
+target_include_directories(
+    lasagna_master
+    PRIVATE
+    include
+)
+
+
+Declaration vs definition
+-------------------------
+Declaration:
+Tells the compiler that something exists.
+
+Example:
+
+  int preparationTime(const std::vector<std::string>& layers, int avgTime = 2);
+
+Definition:
+Gives the actual implementation/body.
+
+Example:
+
+  int preparationTime(const std::vector<std::string>& layers, int avgTime)
+  {
+      return static_cast<int>(layers.size()) * avgTime;
+  }
+
+Important:
+- Function declarations usually go in .h files.
+- Function definitions usually go in .cpp files.
+- The declaration and definition signatures must match.
+- Default parameter values usually go only in the header declaration.
+
+
+Default arguments
+-----------------
+Header:
+
+  int preparationTime(const std::vector<std::string>& layers, int avgTime = 2);
+
+Source file:
+
+  int preparationTime(const std::vector<std::string>& layers, int avgTime)
+  {
+      return static_cast<int>(layers.size()) * avgTime;
+  }
+
+Do not repeat the default value in the .cpp definition.
+
+
+Include guards / #pragma once
+-----------------------------
+Used to prevent the same header content from being included multiple times during compilation.
+
+Example:
+
+  #pragma once
+
+Alternative:
+
+  #ifndef LASAGNA_MASTER_H
+  #define LASAGNA_MASTER_H
+
+  // declarations
+
+  #endif
+
+
+Parameter decision rule
+-----------------------
+Always ask:
+
+1. Do I need a copy?
+2. Do I need to modify the original?
+3. Do I only need to read it?
+4. Is the object cheap or expensive to copy?
+
+Use:
+
+  T value
+
+when you need a copy or the type is small and cheap.
+
+Use:
+
+  T& value
+
+when the function must modify the original object.
+
+Use:
+
+  const T& value
+
+when the function only reads the original object and you want to avoid copying.
+
+
+Examples
+--------
+Pass by value:
+
+  int portions
+
+Good for small/simple values such as int, double, bool.
+
+Editable reference:
+
+  std::vector<std::string>& myList
+
+Good when the function must modify the original vector.
+
+Read-only reference:
+
+  const std::vector<std::string>& layers
+
+Good when the function only reads the vector and should not copy or modify it.
+
+
+Task 1 - preparationTime
+------------------------
+Purpose:
+Calculate total preparation time from number of layers and average time per layer.
+
+Header declaration:
+
+  int preparationTime(const std::vector<std::string>& layers, int avgTime = 2);
+
+Implementation:
+
+  int preparationTime(const std::vector<std::string>& layers, int avgTime)
+  {
+      return static_cast<int>(layers.size()) * avgTime;
+  }
+
+Important:
+- layers.size() returns std::size_t, not int.
+- Because the function returns int, static_cast<int>() makes the conversion explicit.
+- avgTime has default value 2 in the header.
+
+
+Task 2 - quantities
+-------------------
+Purpose:
+Calculate required noodles and sauce.
+
+Rules:
+- Each "noodles" layer adds 50 grams.
+- Each "sauce" layer adds 0.2 liters.
+- Other layers do nothing.
+
+Struct:
+
+  struct amount
+  {
+      int noodles{};
+      double sauce{};
+  };
+
+Why struct is okay here:
+- It is a simple data-only type.
+- Members are public by default.
+- It groups related return values together.
+
+Header declaration:
+
+  amount quantities(const std::vector<std::string>& layers);
+
+Implementation:
+
+  amount quantities(const std::vector<std::string>& layers)
+  {
+      amount amount_needed{};
+
+      for (const auto& layer : layers)
+      {
+          if (layer == "noodles")
+          {
+              amount_needed.noodles += 50;
+          }
+          else if (layer == "sauce")
+          {
+              amount_needed.sauce += 0.2;
+          }
+      }
+
+      return amount_needed;
+  }
+
+Important:
+- amount amount_needed{} initializes noodles to 0 and sauce to 0.0.
+- for (const auto& layer : layers) reads each string without copying or modifying.
+- const auto& is better here than auto&& because this is not generic forwarding code.
+
+
+Task 3 - addSecretIngredient, vector version
+--------------------------------------------
+Purpose:
+Replace the last item in your recipe list with the last item from your friend's list.
+
+Header declaration:
+
+  void addSecretIngredient(std::vector<std::string>& myList,
+                           const std::vector<std::string>& friendIngredients);
+
+Implementation:
+
+  void addSecretIngredient(std::vector<std::string>& myList,
+                           const std::vector<std::string>& friendIngredients)
+  {
+      myList.back() = friendIngredients.back();
+  }
+
+Parameter logic:
+- myList is std::vector<std::string>& because it must be modified.
+- friendIngredients is const std::vector<std::string>& because it is only read.
+- Return type is void because the function modifies myList directly.
+
+Important:
+- .back() returns the last element of a vector.
+- The exercise assumes the vectors are valid and not empty.
+
+
+Task 4 - scaleRecipe
+--------------------
+Purpose:
+Scale ingredient quantities from a 2-portion recipe to a desired number of portions.
+
+Formula:
+
+  new amount = old amount * portions / 2
+
+Header declaration:
+
+  std::vector<double> scaleRecipe(const std::vector<double>& quantities, int portions);
+
+Implementation:
+
+  std::vector<double> scaleRecipe(const std::vector<double>& quantities, int portions)
+  {
+      std::vector<double> quantitiesNeeded{};
+      const double scaleFactor{portions / 2.0};
+
+      for (const double quantity : quantities)
+      {
+          quantitiesNeeded.push_back(quantity * scaleFactor);
+      }
+
+      return quantitiesNeeded;
+  }
+
+Important:
+- The original quantities vector must not be modified.
+- Return a new vector.
+- Use 2.0 instead of 2 to avoid integer division.
+- double is cheap to copy, so for (const double quantity : quantities) is okay.
+- scaleFactor is clearer than dblPortions.
+
+
+Task 5 - addSecretIngredient, string version
+--------------------------------------------
+Purpose:
+Replace the last item in your recipe list with one single secret ingredient string.
+
+Header declaration:
+
+  void addSecretIngredient(std::vector<std::string>& myList,
+                           const std::string& secretIngredient);
+
+Implementation:
+
+  void addSecretIngredient(std::vector<std::string>& myList,
+                           const std::string& secretIngredient)
+  {
+      myList.back() = secretIngredient;
+  }
+
+This is function overloading.
+
+You now have two functions with the same name:
+
+  void addSecretIngredient(std::vector<std::string>& myList,
+                           const std::vector<std::string>& friendIngredients);
+
+  void addSecretIngredient(std::vector<std::string>& myList,
+                           const std::string& secretIngredient);
+
+C++ chooses the correct one based on the second argument:
+- vector + vector calls the first version.
+- vector + string calls the second version.
+
+
+Final header
+------------
+#pragma once
+
+#include <string>
+#include <vector>
+
+namespace lasagna_master
+{
+    struct amount
+    {
+        int noodles{};
+        double sauce{};
+    };
+
+    int preparationTime(const std::vector<std::string>& layers, int avgTime = 2);
+
+    amount quantities(const std::vector<std::string>& layers);
+
+    void addSecretIngredient(std::vector<std::string>& myList,
+                             const std::vector<std::string>& friendIngredients);
+
+    void addSecretIngredient(std::vector<std::string>& myList,
+                             const std::string& secretIngredient);
+
+    std::vector<double> scaleRecipe(const std::vector<double>& quantities, int portions);
+}
+
+
+Final source file
+-----------------
+#include "lasagna_master.h"
+
+namespace lasagna_master
+{
+    int preparationTime(const std::vector<std::string>& layers, int avgTime)
+    {
+        return static_cast<int>(layers.size()) * avgTime;
+    }
+
+    amount quantities(const std::vector<std::string>& layers)
+    {
+        amount amount_needed{};
+
+        for (const auto& layer : layers)
+        {
+            if (layer == "noodles")
+            {
+                amount_needed.noodles += 50;
+            }
+            else if (layer == "sauce")
+            {
+                amount_needed.sauce += 0.2;
+            }
+        }
+
+        return amount_needed;
+    }
+
+    void addSecretIngredient(std::vector<std::string>& myList,
+                             const std::vector<std::string>& friendIngredients)
+    {
+        myList.back() = friendIngredients.back();
+    }
+
+    void addSecretIngredient(std::vector<std::string>& myList,
+                             const std::string& secretIngredient)
+    {
+        myList.back() = secretIngredient;
+    }
+
+    std::vector<double> scaleRecipe(const std::vector<double>& quantities, int portions)
+    {
+        std::vector<double> quantitiesNeeded{};
+        const double scaleFactor{portions / 2.0};
+
+        for (const double quantity : quantities)
+        {
+            quantitiesNeeded.push_back(quantity * scaleFactor);
+        }
+
+        return quantitiesNeeded;
+    }
+}
+
+
+Common mistakes to avoid
+------------------------
+1. Mismatching header and source signatures.
+
+Wrong:
+
+  // header
+  amount quantities(const std::vector<std::string>& layers);
+
+  // cpp
+  amount quantities(std::vector<std::string>& layers)
+
+These are different functions because const is part of the parameter type.
+
+2. Repeating default arguments in .cpp.
+
+Wrong:
+
+  int preparationTime(const std::vector<std::string>& layers, int avgTime = 2)
+
+Default value should be in the header declaration.
+
+3. Copying vectors unnecessarily.
+
+Less ideal:
+
+  amount quantities(std::vector<std::string> layers)
+
+Better:
+
+  amount quantities(const std::vector<std::string>& layers)
+
+4. Using editable reference when only reading.
+
+Less safe:
+
+  std::vector<std::string>& layers
+
+Better:
+
+  const std::vector<std::string>& layers
+
+5. Integer division mistake.
+
+Wrong:
+
+  double scaleFactor = portions / 2;
+
+If portions is int, this performs integer division first.
+
+Correct:
+
+  double scaleFactor = portions / 2.0;
+
+
+VBA equivalents
+---------------
+C++ editable reference:
+
+  std::vector<std::string>& myList
+
+VBA mental equivalent:
+
+  ByRef myList
+
+C++ pass by value:
+
+  int portions
+
+VBA mental equivalent:
+
+  ByVal portions
+
+C++ const reference:
+
+  const std::vector<std::string>& layers
+
+VBA does not have an exact direct equivalent.
+Closest mental model:
+- Pass the original object efficiently.
+- Do not allow the function to modify it.
+
+
+JavaScript equivalents
+----------------------
+JavaScript arrays behave reference-like:
+
+  function addSecretIngredient(myList, secretIngredient) {
+      myList[myList.length - 1] = secretIngredient;
+  }
+
+But JavaScript does not enforce const reference safety for array contents like C++ does.
+
+JavaScript scaling equivalent:
+
+  function scaleRecipe(quantities, portions) {
+      const scaleFactor = portions / 2;
+      return quantities.map(q => q * scaleFactor);
+  }
+
+
+What was learned
+----------------
+- How to decide between T, T&, and const T&.
+- How to use default function arguments.
+- How to write declarations in .h and definitions in .cpp.
+- How to avoid unnecessary vector copies.
+- How to use function overloading.
+- How to return a new vector when original data must stay unchanged.
+- How to modify an existing vector through a non-const reference.
+- How to use CMake with a small multi-file C++ project.
+
+
+What should be remembered
+-------------------------
+Main parameter rule:
+
+  T           -> copy / simple value
+  T&          -> modify original
+  const T&    -> read original without copying
+
+Main file rule:
+
+  .h          -> declarations, public API, default arguments
+  .cpp        -> implementations
+
+Main professional question:
+
+  Who owns this object?
+  How long does it live?
+  Can it be copied?
+  Should it be moved?
+  Can it be null?
+  Who may modify it?
+
+
+Mini quiz for later review
+--------------------------
+1. Why is avgTime = 2 written in the .h file but not repeated in .cpp?
+2. What does const std::vector<std::string>& mean?
+3. Why does quantities() return amount instead of modifying an amount parameter?
+4. Why does addSecretIngredient() return void?
+5. Why is myList non-const?
+6. Why is friendIngredients const?
+7. What is function overloading?
+8. Why does C++ know which addSecretIngredient() to call?
+9. Why is portions / 2.0 safer than portions / 2?
+10. What happens if declaration and definition signatures do not match?

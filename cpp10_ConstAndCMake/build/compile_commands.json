@@ -1,0 +1,14 @@
+[
+{
+  "directory": "/home/cansoy/Desktop/lasagna/build",
+  "command": "/usr/bin/c++  -I/home/cansoy/Desktop/lasagna/include -g -std=gnu++20 -o CMakeFiles/lasagna_master.dir/main.cpp.o -c /home/cansoy/Desktop/lasagna/main.cpp",
+  "file": "/home/cansoy/Desktop/lasagna/main.cpp",
+  "output": "CMakeFiles/lasagna_master.dir/main.cpp.o"
+},
+{
+  "directory": "/home/cansoy/Desktop/lasagna/build",
+  "command": "/usr/bin/c++  -I/home/cansoy/Desktop/lasagna/include -g -std=gnu++20 -o CMakeFiles/lasagna_master.dir/src/lasagna_master.cpp.o -c /home/cansoy/Desktop/lasagna/src/lasagna_master.cpp",
+  "file": "/home/cansoy/Desktop/lasagna/src/lasagna_master.cpp",
+  "output": "CMakeFiles/lasagna_master.dir/src/lasagna_master.cpp.o"
+}
+]
