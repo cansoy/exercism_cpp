@@ -1,0 +1,499 @@
+# CMake Day 1 Notes
+
+## 1. Project root
+
+Project root = the folder where `CMakeLists.txt` lives.
+
+Current example:
+
+```text
+/home/cansoy/Desktop/cmake
+```
+
+`build/` is not the project root. It is the generated build folder.
+
+---
+
+## 2. Basic CMake commands
+
+### Configure / generate step
+
+```bash
+cmake -S . -B build
+```
+
+Meaning:
+
+```text
+-S .      = source folder is the current folder
+-B build  = generate build files inside build/
+```
+
+This command reads `CMakeLists.txt` and prepares the build folder.
+
+Important:
+
+```text
+cmake -S . -B build does not compile yet.
+It prepares/generates build system files.
+```
+
+### Build step
+
+```bash
+cmake --build build
+```
+
+Meaning:
+
+```text
+Use the build system inside build/ and compile/link the program.
+```
+
+On Ubuntu, CMake usually calls Make behind the scenes if Make is the selected generator.
+
+### Run step
+
+```bash
+./build/cmake_workshop
+```
+
+Meaning:
+
+```text
+Run the executable created inside build/.
+```
+
+Linux wording:
+
+```text
+executable file
+```
+
+Not usually `.exe`.
+
+---
+
+## 3. Basic CMakeLists.txt
+
+```cmake
+cmake_minimum_required(VERSION 3.20)
+
+project(CmakeWorkshop)
+
+add_executable(
+    cmake_workshop
+    main.cpp
+    src/message.cpp
+)
+
+target_include_directories(
+    cmake_workshop
+    PRIVATE
+    include
+)
+```
+
+---
+
+## 4. project(...)
+
+```cmake
+project(CmakeWorkshop)
+```
+
+Meaning:
+
+```text
+Names the whole project.
+```
+
+Important:
+
+```text
+Project name is not necessarily the executable name.
+```
+
+---
+
+## 5. add_executable(...)
+
+```cmake
+add_executable(
+    cmake_workshop
+    main.cpp
+    src/message.cpp
+)
+```
+
+Meaning:
+
+```text
+Create a target named cmake_workshop.
+Compile main.cpp and src/message.cpp into that target.
+```
+
+Breakdown:
+
+```text
+cmake_workshop  = target name
+main.cpp        = source file to compile
+src/message.cpp = source file to compile
+```
+
+Important:
+
+```text
+The name after add_executable is the target name.
+For executables, the target name usually becomes the executable file name.
+```
+
+So this usually creates:
+
+```text
+build/cmake_workshop
+```
+
+---
+
+## 6. target_include_directories(...)
+
+```cmake
+target_include_directories(
+    cmake_workshop
+    PRIVATE
+    include
+)
+```
+
+Meaning:
+
+```text
+For the target cmake_workshop,
+when compiling its .cpp files,
+also search the include/ folder for header files.
+```
+
+Breakdown:
+
+```text
+cmake_workshop = target name created by add_executable
+PRIVATE        = this include path is only needed by this target for now
+include        = folder where header files are searched
+```
+
+Important:
+
+```text
+target_include_directories does not compile headers.
+It gives the compiler a header search path.
+```
+
+Memory sentence:
+
+```text
+add_executable tells CMake which .cpp files to compile.
+target_include_directories tells the compiler where to find .h files.
+```
+
+---
+
+## 7. Header and source file roles
+
+Header file:
+
+```text
+.h file = declaration / public interface
+```
+
+Source file:
+
+```text
+.cpp file = definition / implementation
+```
+
+Example:
+
+```text
+message.h   says: this function exists.
+message.cpp says: this is how the function works.
+main.cpp    uses the function.
+CMakeLists.txt builds the .cpp files together.
+```
+
+---
+
+## 8. Include, compile, link chain
+
+Important chain:
+
+```text
+.h included into .cpp
+.cpp compiled into .o
+.o files linked into executable
+```
+
+So:
+
+```text
+.h files are included.
+.cpp files are compiled.
+.o files are linked.
+```
+
+Headers are not normally compiled directly.
+
+---
+
+## 9. Include folder with subfolders
+
+Good scalable structure:
+
+```text
+project/
+  include/
+    cmake_workshop/
+      message/
+        message.h
+      math/
+        calculator.h
+      user/
+        user.h
+  src/
+    message/
+      message.cpp
+    math/
+      calculator.cpp
+    user/
+      user.cpp
+  main.cpp
+  CMakeLists.txt
+```
+
+CMake usually receives only the root include folder:
+
+```cmake
+target_include_directories(
+    cmake_workshop
+    PRIVATE
+    include
+)
+```
+
+Then C++ includes the path inside that root:
+
+```cpp
+#include "cmake_workshop/message/message.h"
+#include "cmake_workshop/math/calculator.h"
+#include "cmake_workshop/user/user.h"
+```
+
+Compiler combines:
+
+```text
+include/ + cmake_workshop/message/message.h
+=
+include/cmake_workshop/message/message.h
+```
+
+---
+
+## 10. Why not add every subfolder to CMake?
+
+Avoid:
+
+```cmake
+target_include_directories(
+    cmake_workshop
+    PRIVATE
+    include/cmake_workshop/message
+    include/cmake_workshop/math
+    include/cmake_workshop/user
+)
+```
+
+Because then includes become unclear:
+
+```cpp
+#include "message.h"
+#include "calculator.h"
+#include "config.h"
+```
+
+This can become dangerous in bigger projects if many modules have the same file names.
+
+Better:
+
+```cmake
+target_include_directories(
+    cmake_workshop
+    PRIVATE
+    include
+)
+```
+
+And:
+
+```cpp
+#include "cmake_workshop/message/message.h"
+#include "cmake_workshop/math/calculator.h"
+#include "cmake_workshop/user/config.h"
+```
+
+Memory sentence:
+
+```text
+CMake gets broad roots.
+C++ includes use meaningful paths.
+```
+
+---
+
+## 11. Relative include vs clean include
+
+Less professional:
+
+```cpp
+#include "../include/message.h"
+```
+
+This means the `.cpp` file knows the folder movement:
+
+```text
+go up one folder, then enter include/
+```
+
+Cleaner when CMake is configured:
+
+```cpp
+#include "message.h"
+```
+
+or with project/module folder:
+
+```cpp
+#include "cmake_workshop/message/message.h"
+```
+
+This means:
+
+```text
+I need this header.
+The build system knows where headers are.
+```
+
+---
+
+## 12. Project name vs target name
+
+Example:
+
+```cmake
+project(CmakeWorkshop)
+
+add_executable(
+    cmake_workshop
+    main.cpp
+)
+```
+
+Project name:
+
+```text
+CmakeWorkshop
+```
+
+Target name:
+
+```text
+cmake_workshop
+```
+
+Rule:
+
+```text
+target_include_directories must use the target name, not the project name.
+```
+
+Correct:
+
+```cmake
+target_include_directories(cmake_workshop PRIVATE include)
+```
+
+Wrong:
+
+```cmake
+target_include_directories(CmakeWorkshop PRIVATE include)
+```
+
+Unless a target named `CmakeWorkshop` was actually created.
+
+---
+
+## 13. Core formula to remember
+
+```cmake
+add_executable(target_name
+    main.cpp
+    src/some_file.cpp
+)
+
+target_include_directories(target_name
+    PRIVATE
+    include
+)
+```
+
+Meaning:
+
+```text
+add_executable creates the target.
+target_include_directories modifies the same target.
+```
+
+---
+
+## 14. VBA / JavaScript analogy
+
+Not exact, but useful:
+
+```text
+CMakeLists.txt is like a project recipe.
+```
+
+In Node.js:
+
+```text
+package.json scripts describe project commands.
+npm run build feels similar to cmake --build build.
+```
+
+But C++ has a stronger compile/link process:
+
+```text
+CMakeLists.txt -> build files -> compiler -> linker -> executable
+```
+
+---
+
+## 15. Today’s final memory
+
+```text
+Project root = where CMakeLists.txt lives.
+
+cmake -S . -B build = prepare/generate build folder.
+cmake --build build = compile and link.
+./build/cmake_workshop = run executable.
+
+project(...) = whole project name.
+add_executable(...) = creates target and lists .cpp files.
+target_include_directories(...) = gives header search folder to compiler.
+
+.h files are included.
+.cpp files are compiled.
+.o files are linked.
+
+CMake gets the include root.
+#include gives the path from that root.
+```
