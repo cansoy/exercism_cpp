@@ -1,4 +1,4 @@
-./cpp11_SmartPointers/build/
+cpp11_SmartPointers/build/
 
 # CMake build folders in any exercise
 #**/build/

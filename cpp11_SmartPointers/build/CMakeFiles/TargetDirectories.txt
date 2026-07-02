@@ -1,3 +1,0 @@
-/home/cansoy/Desktop/pointers/build/CMakeFiles/smart_pointers.dir
-/home/cansoy/Desktop/pointers/build/CMakeFiles/edit_cache.dir
-/home/cansoy/Desktop/pointers/build/CMakeFiles/rebuild_cache.dir
