@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/cansoy/Desktop/lasagna
+CMAKE_SOURCE_DIR = /home/cansoy/Desktop/pointers
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/cansoy/Desktop/lasagna/build
+CMAKE_BINARY_DIR = /home/cansoy/Desktop/pointers/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/cansoy/Desktop/lasagna/build/CMakeFiles /home/cansoy/Desktop/lasagna/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/cansoy/Desktop/pointers/build/CMakeFiles /home/cansoy/Desktop/pointers/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/cansoy/Desktop/lasagna/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/cansoy/Desktop/pointers/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -117,24 +117,24 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named lasagna_master
+# Target rules for targets named smart_pointers
 
 # Build rule for target.
-lasagna_master: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 lasagna_master
-.PHONY : lasagna_master
+smart_pointers: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 smart_pointers
+.PHONY : smart_pointers
 
 # fast build rule for target.
-lasagna_master/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lasagna_master.dir/build.make CMakeFiles/lasagna_master.dir/build
-.PHONY : lasagna_master/fast
+smart_pointers/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/smart_pointers.dir/build.make CMakeFiles/smart_pointers.dir/build
+.PHONY : smart_pointers/fast
 
 main.o: main.cpp.o
 .PHONY : main.o
 
 # target to build an object file
 main.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lasagna_master.dir/build.make CMakeFiles/lasagna_master.dir/main.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/smart_pointers.dir/build.make CMakeFiles/smart_pointers.dir/main.cpp.o
 .PHONY : main.cpp.o
 
 main.i: main.cpp.i
@@ -142,7 +142,7 @@ main.i: main.cpp.i
 
 # target to preprocess a source file
 main.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lasagna_master.dir/build.make CMakeFiles/lasagna_master.dir/main.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/smart_pointers.dir/build.make CMakeFiles/smart_pointers.dir/main.cpp.i
 .PHONY : main.cpp.i
 
 main.s: main.cpp.s
@@ -150,32 +150,32 @@ main.s: main.cpp.s
 
 # target to generate assembly for a file
 main.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lasagna_master.dir/build.make CMakeFiles/lasagna_master.dir/main.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/smart_pointers.dir/build.make CMakeFiles/smart_pointers.dir/main.cpp.s
 .PHONY : main.cpp.s
 
-src/lasagna_master.o: src/lasagna_master.cpp.o
-.PHONY : src/lasagna_master.o
+src/power_of_troy.o: src/power_of_troy.cpp.o
+.PHONY : src/power_of_troy.o
 
 # target to build an object file
-src/lasagna_master.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lasagna_master.dir/build.make CMakeFiles/lasagna_master.dir/src/lasagna_master.cpp.o
-.PHONY : src/lasagna_master.cpp.o
+src/power_of_troy.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/smart_pointers.dir/build.make CMakeFiles/smart_pointers.dir/src/power_of_troy.cpp.o
+.PHONY : src/power_of_troy.cpp.o
 
-src/lasagna_master.i: src/lasagna_master.cpp.i
-.PHONY : src/lasagna_master.i
+src/power_of_troy.i: src/power_of_troy.cpp.i
+.PHONY : src/power_of_troy.i
 
 # target to preprocess a source file
-src/lasagna_master.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lasagna_master.dir/build.make CMakeFiles/lasagna_master.dir/src/lasagna_master.cpp.i
-.PHONY : src/lasagna_master.cpp.i
+src/power_of_troy.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/smart_pointers.dir/build.make CMakeFiles/smart_pointers.dir/src/power_of_troy.cpp.i
+.PHONY : src/power_of_troy.cpp.i
 
-src/lasagna_master.s: src/lasagna_master.cpp.s
-.PHONY : src/lasagna_master.s
+src/power_of_troy.s: src/power_of_troy.cpp.s
+.PHONY : src/power_of_troy.s
 
 # target to generate assembly for a file
-src/lasagna_master.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lasagna_master.dir/build.make CMakeFiles/lasagna_master.dir/src/lasagna_master.cpp.s
-.PHONY : src/lasagna_master.cpp.s
+src/power_of_troy.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/smart_pointers.dir/build.make CMakeFiles/smart_pointers.dir/src/power_of_troy.cpp.s
+.PHONY : src/power_of_troy.cpp.s
 
 # Help Target
 help:
@@ -185,13 +185,13 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... lasagna_master"
+	@echo "... smart_pointers"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
-	@echo "... src/lasagna_master.o"
-	@echo "... src/lasagna_master.i"
-	@echo "... src/lasagna_master.s"
+	@echo "... src/power_of_troy.o"
+	@echo "... src/power_of_troy.i"
+	@echo "... src/power_of_troy.s"
 .PHONY : help
 
 

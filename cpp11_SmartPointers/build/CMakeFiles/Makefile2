@@ -54,16 +54,16 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/cansoy/Desktop/lasagna
+CMAKE_SOURCE_DIR = /home/cansoy/Desktop/pointers
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/cansoy/Desktop/lasagna/build
+CMAKE_BINARY_DIR = /home/cansoy/Desktop/pointers/build
 
 #=============================================================================
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/lasagna_master.dir/all
+all: CMakeFiles/smart_pointers.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -71,34 +71,34 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/lasagna_master.dir/clean
+clean: CMakeFiles/smart_pointers.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target CMakeFiles/lasagna_master.dir
+# Target rules for target CMakeFiles/smart_pointers.dir
 
 # All Build rule for target.
-CMakeFiles/lasagna_master.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lasagna_master.dir/build.make CMakeFiles/lasagna_master.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lasagna_master.dir/build.make CMakeFiles/lasagna_master.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/cansoy/Desktop/lasagna/build/CMakeFiles --progress-num=1,2,3 "Built target lasagna_master"
-.PHONY : CMakeFiles/lasagna_master.dir/all
+CMakeFiles/smart_pointers.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/smart_pointers.dir/build.make CMakeFiles/smart_pointers.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/smart_pointers.dir/build.make CMakeFiles/smart_pointers.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/cansoy/Desktop/pointers/build/CMakeFiles --progress-num=1,2,3 "Built target smart_pointers"
+.PHONY : CMakeFiles/smart_pointers.dir/all
 
 # Build rule for subdir invocation for target.
-CMakeFiles/lasagna_master.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/cansoy/Desktop/lasagna/build/CMakeFiles 3
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/lasagna_master.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/cansoy/Desktop/lasagna/build/CMakeFiles 0
-.PHONY : CMakeFiles/lasagna_master.dir/rule
+CMakeFiles/smart_pointers.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/cansoy/Desktop/pointers/build/CMakeFiles 3
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/smart_pointers.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/cansoy/Desktop/pointers/build/CMakeFiles 0
+.PHONY : CMakeFiles/smart_pointers.dir/rule
 
 # Convenience name for target.
-lasagna_master: CMakeFiles/lasagna_master.dir/rule
-.PHONY : lasagna_master
+smart_pointers: CMakeFiles/smart_pointers.dir/rule
+.PHONY : smart_pointers
 
 # clean rule for target.
-CMakeFiles/lasagna_master.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/lasagna_master.dir/build.make CMakeFiles/lasagna_master.dir/clean
-.PHONY : CMakeFiles/lasagna_master.dir/clean
+CMakeFiles/smart_pointers.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/smart_pointers.dir/build.make CMakeFiles/smart_pointers.dir/clean
+.PHONY : CMakeFiles/smart_pointers.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

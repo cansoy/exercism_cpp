@@ -1,0 +1,1074 @@
+Exercise 015 — Power of Troy
+Concept: Smart Pointers
+Status: Completed locally
+Next Exercise: 016 — Speedywagon Foundation
+
+============================================================
+1. Big Idea of This Exercise
+============================================================
+
+This exercise was mainly about understanding ownership in modern C++.
+
+The important question was not only:
+
+    "Does this code work?"
+
+The deeper question was:
+
+    "Who owns this object?"
+    "How long does it live?"
+    "Can it be copied?"
+    "Should it be moved?"
+    "Can it be nullptr?"
+    "Who is allowed to modify it?"
+
+Power of Troy used two different ownership models:
+
+    artifact  -> std::unique_ptr
+    power     -> std::shared_ptr
+
+This was intentional.
+
+An artifact can only belong to one human at a time.
+A power can belong to one human but can influence many humans.
+
+So the exercise forced us to distinguish:
+
+    unique ownership  -> std::unique_ptr
+    shared ownership  -> std::shared_ptr
+
+
+============================================================
+2. Core Smart Pointer Rules
+============================================================
+
+std::unique_ptr<T>
+------------------------------------------------------------
+
+A std::unique_ptr owns one object exclusively.
+
+Meaning:
+
+    - Only one unique_ptr can own the object.
+    - unique_ptr cannot be copied.
+    - unique_ptr ownership can be moved.
+    - When the unique_ptr is destroyed, the owned object is destroyed automatically.
+    - If the unique_ptr is empty, it is nullptr.
+
+Example:
+
+    std::unique_ptr<artifact> possession{nullptr};
+
+Meaning:
+
+    possession exists.
+    No artifact object exists yet.
+    possession currently owns nothing.
+
+Example:
+
+    auto possession = std::make_unique<artifact>();
+
+Meaning:
+
+    A real artifact object is created on the heap.
+    possession owns that artifact.
+    possession is not nullptr.
+
+Important rule:
+
+    unique_ptr{}           -> no object exists yet
+    make_unique<T>()       -> create a real object
+    std::move(unique_ptr)  -> transfer ownership
+
+
+std::shared_ptr<T>
+------------------------------------------------------------
+
+A std::shared_ptr allows multiple smart pointers to share ownership of the same object.
+
+Meaning:
+
+    - shared_ptr can be copied.
+    - Copying a shared_ptr does not copy the object.
+    - Copying a shared_ptr creates another owner of the same object.
+    - The object is destroyed only when the last shared_ptr releases ownership.
+    - use_count() tells how many shared_ptr objects currently share ownership.
+
+Example:
+
+    auto p1 = std::make_shared<power>();
+    auto p2 = p1;
+
+Meaning:
+
+    p1 and p2 point to the same power object.
+    Both share ownership.
+    p1 is not nullptr.
+    p2 is not nullptr.
+
+If we do:
+
+    p1->effect = "fire";
+
+Then:
+
+    p2->effect
+
+also sees "fire", because both point to the same object.
+
+If we do:
+
+    p1.reset();
+
+Then:
+
+    p1 becomes nullptr.
+    p2 still owns the power.
+    The power object is not destroyed yet.
+
+Important rule:
+
+    shared_ptr copy  -> shared ownership
+    unique_ptr move  -> ownership transfer
+
+
+nullptr
+------------------------------------------------------------
+
+nullptr means the smart pointer currently points to no object.
+
+Example:
+
+    std::unique_ptr<artifact> possession{nullptr};
+
+This does not create an artifact.
+
+It only creates an empty smart pointer that may later own an artifact.
+
+Better wording:
+
+    "I reserved a smart pointer slot, but I did not create the object yet."
+
+
+make_unique / make_shared
+------------------------------------------------------------
+
+std::make_unique<T>() creates a real object and returns a unique_ptr that owns it.
+
+std::make_shared<T>() creates a real object and returns a shared_ptr that owns it.
+
+Important distinction:
+
+    std::unique_ptr<artifact> a{};
+
+means:
+
+    a exists.
+    artifact object does not exist.
+    a == nullptr.
+
+But:
+
+    auto b = std::make_unique<artifact>();
+
+means:
+
+    b exists.
+    artifact object exists on the heap.
+    b owns the artifact.
+    b != nullptr.
+
+Developer responsibility:
+
+    The developer decides who owns.
+    The smart pointer performs cleanup automatically.
+
+Do not manually delete objects owned by smart pointers.
+
+
+============================================================
+3. Task 1 — human Type
+============================================================
+
+Requirement:
+
+    A human may possess one unique artifact.
+    A human may own one power.
+    A human may be influenced by one power.
+    By default, all of these should be nullptr.
+
+Final model:
+
+    struct artifact
+    {
+        std::string name;
+    };
+
+    struct power
+    {
+        std::string effect;
+    };
+
+    struct human
+    {
+        std::unique_ptr<artifact> possession{nullptr};
+        std::shared_ptr<power> own_power{nullptr};
+        std::shared_ptr<power> influenced_by{nullptr};
+    };
+
+Meaning:
+
+    possession    -> unique ownership of artifact
+    own_power     -> shared ownership of power
+    influenced_by -> shared ownership/reference to another power
+
+Why unique_ptr for artifact?
+
+    Because each artifact can only be possessed by one human at a time.
+
+Why shared_ptr for power?
+
+    Because one human can own a power, but many other humans can be influenced by the same power.
+
+
+Common mistake:
+------------------------------------------------------------
+
+Wrong idea:
+
+    std::unique_ptr<artifact> possession = std::make_unique<artifact>();
+
+This creates an artifact immediately.
+
+But the task says humans are born without any artifact.
+
+Correct mental model:
+
+    smart pointer exists, but object does not exist yet.
+
+
+============================================================
+4. Task 2 — give_new_artifact
+============================================================
+
+Requirement:
+
+    Create a new artifact and give it to a human.
+
+Example behavior:
+
+    human erik{};
+    give_new_artifact(erik, "Mind shielding helmet");
+
+    erik.possession->name
+    // "Mind shielding helmet"
+
+Important design decision:
+
+    give_new_artifact is a free function, not a member function.
+
+Why?
+
+    The exercise calls it like this:
+
+        give_new_artifact(erik, "helmet");
+
+    not like this:
+
+        erik.give_new_artifact("helmet");
+
+So it belongs inside namespace troy, outside struct human.
+
+It modifies the original human, so the human must be passed by reference.
+
+Declaration:
+
+    void give_new_artifact(human &, const std::string &);
+
+Definition used locally:
+
+    void give_new_artifact(human &hmn, const std::string &art_name)
+    {
+        artifact art{art_name};
+        hmn.possession = std::make_unique<artifact>(art);
+    }
+
+Meaning:
+
+    1. Create local artifact named art.
+    2. Create a heap artifact copy using make_unique.
+    3. hmn.possession now owns the heap artifact.
+
+Professional note:
+
+    This version works and is clear for learning.
+    It creates a local object and then copies it into the heap object.
+    Later this can be simplified.
+
+
+Important safety rule:
+------------------------------------------------------------
+
+Before using:
+
+    erik.possession->name
+
+make sure:
+
+    erik.possession != nullptr
+
+Dangerous code:
+
+    if (!erik.possession)
+    {
+        std::cout << erik.possession->name;
+    }
+
+This means:
+
+    If pointer is nullptr, dereference it.
+
+That is undefined behavior.
+
+Safe direction:
+
+    if (erik.possession != nullptr)
+    {
+        std::cout << erik.possession->name;
+    }
+
+
+============================================================
+5. Task 3 — exchange_artifacts
+============================================================
+
+Requirement:
+
+    Exchange two humans' artifacts.
+
+Example behavior:
+
+    Before:
+        uchiha  -> "konoha headband"
+        uzumaki -> "forehead protector"
+
+    After exchange:
+        uchiha  -> "forehead protector"
+        uzumaki -> "konoha headband"
+
+Important reasoning:
+
+    human.possession is std::unique_ptr<artifact>.
+
+Therefore:
+
+    - It cannot be copied.
+    - Ownership must be moved or swapped.
+    - The function must receive the original unique_ptrs by reference.
+
+Declaration:
+
+    void exchange_artifacts(std::unique_ptr<artifact> &, std::unique_ptr<artifact> &);
+
+Definition used locally:
+
+    void exchange_artifacts(std::unique_ptr<artifact> &first,
+                            std::unique_ptr<artifact> &second)
+    {
+        auto swap_first = std::move(first);
+        auto swap_second = std::move(second);
+        first = std::move(swap_second);
+        second = std::move(swap_first);
+    }
+
+Meaning step by step:
+
+    1. first gives ownership to swap_first.
+    2. second gives ownership to swap_second.
+    3. first receives second's old artifact.
+    4. second receives first's old artifact.
+
+Temporary state inside function:
+
+    first  -> nullptr
+    second -> nullptr
+
+Final state:
+
+    first  -> owns second's old artifact
+    second -> owns first's old artifact
+
+Professional note:
+
+    This implementation is educational because it shows move ownership clearly.
+    In professional C++, std::swap could also be used.
+
+
+============================================================
+6. Task 4 — manifest_power
+============================================================
+
+Requirement:
+
+    Create a new power and assign it to a human's own_power.
+
+Example behavior:
+
+    human eleven{};
+    manifest_power(eleven, "psychokinesis");
+
+    eleven.own_power->effect
+    // "psychokinesis"
+
+Important design decision:
+
+    manifest_power is a free function inside namespace troy.
+
+It modifies the original human, so the human must be passed by reference.
+
+own_power is std::shared_ptr<power>, so we use std::make_shared<power>.
+
+Declaration:
+
+    void manifest_power(human &, std::string);
+
+Definition used locally:
+
+    void manifest_power(human &hmn, std::string power_name)
+    {
+        power pwr{power_name};
+        hmn.own_power = std::make_shared<power>(pwr);
+    }
+
+Meaning:
+
+    1. Create local power pwr.
+    2. Create heap power copy using make_shared.
+    3. hmn.own_power now shares/owns that power.
+
+Professional note:
+
+    This works.
+    It is clear for learning.
+    It can be simplified later to avoid the local copy.
+
+
+============================================================
+7. Task 5 — use_power
+============================================================
+
+Requirement:
+
+    A caster uses their power on a target.
+    The target becomes influenced by the caster's power.
+
+Example behavior:
+
+    human pamela_isley{};
+    manifest_power(pamela_isley, "control pheromones");
+
+    human count_vertigo{};
+    use_power(pamela_isley, count_vertigo);
+
+    count_vertigo.influenced_by->effect
+    // "control pheromones"
+
+Important reasoning:
+
+    The caster already has own_power.
+    The target's influenced_by must point to the same power.
+
+The caster should not be modified.
+The target should be modified.
+
+Therefore:
+
+    caster -> const human &
+    target -> human &
+
+Declaration:
+
+    void use_power(const human &, human &);
+
+Definition:
+
+    void use_power(const human &caster, human &target)
+    {
+        target.influenced_by = caster.own_power;
+    }
+
+Very important smart pointer concept:
+
+    target.influenced_by = caster.own_power;
+
+This copies the shared_ptr.
+
+It does not copy the power object.
+It does not move the power away from the caster.
+
+After this:
+
+    caster.own_power and target.influenced_by point to the same power object.
+
+This is correct because shared_ptr means shared ownership.
+
+Common mistake:
+
+    Do not use std::move here.
+
+Why?
+
+    Moving would take ownership away from the caster.
+    But the caster should still own their power.
+
+
+============================================================
+8. Task 6 — power_intensity
+============================================================
+
+Requirement:
+
+    Return the intensity of a human's power.
+
+If the human has no power:
+
+    return 0
+
+If the human owns a power and 3 humans are influenced by it:
+
+    return 4
+
+Why 4?
+
+    1 owner is the caster's own_power.
+    3 more owners are the targets' influenced_by shared_ptrs.
+
+shared_ptr provides:
+
+    use_count()
+
+This tells how many shared_ptr objects currently share ownership.
+
+Declaration used locally:
+
+    size_t power_intensity(const human &);
+
+But important Exercism note:
+
+    The exercise expects int.
+    For Exercism, prefer:
+
+        int power_intensity(const human &);
+
+Definition logic:
+
+    return owner.own_power.use_count();
+
+Meaning:
+
+    If own_power is nullptr, use_count() returns 0.
+    If own_power is shared by caster + targets, use_count() returns the shared ownership count.
+
+Example:
+
+    human jean_grey{};
+    manifest_power(jean_grey, "uplifting personality");
+
+    human scott{};
+    human logan{};
+    human ororo{};
+
+    use_power(jean_grey, ororo);
+    use_power(jean_grey, logan);
+    use_power(jean_grey, scott);
+
+    power_intensity(jean_grey);
+    // 4
+
+Ownership count:
+
+    jean_grey.own_power -> owner 1
+    ororo.influenced_by -> owner 2
+    logan.influenced_by -> owner 3
+    scott.influenced_by -> owner 4
+
+
+============================================================
+9. Final Local Code Reviewed
+============================================================
+
+Header file:
+
+    #pragma once
+
+    #include <string>
+    #include <memory>
+
+    namespace troy
+    {
+        struct artifact
+        {
+            std::string name;
+        };
+
+        struct power
+        {
+            std::string effect;
+        };
+
+        struct human
+        {
+            std::unique_ptr<artifact> possession{nullptr};
+            std::shared_ptr<power> own_power{nullptr};
+            std::shared_ptr<power> influenced_by{nullptr};
+        };
+
+        void give_new_artifact(human &, const std::string &);
+        void exchange_artifacts(std::unique_ptr<artifact> &, std::unique_ptr<artifact> &);
+        void manifest_power(human &, std::string);
+        void use_power(const human &, human &);
+        int power_intensity(const human &);
+    }
+
+Source file logic:
+
+    namespace troy
+    {
+        void give_new_artifact(human &hmn, const std::string &art_name)
+        {
+            artifact art{art_name};
+            hmn.possession = std::make_unique<artifact>(art);
+        }
+
+        void exchange_artifacts(std::unique_ptr<artifact> &first,
+                                std::unique_ptr<artifact> &second)
+        {
+            auto swap_first = std::move(first);
+            auto swap_second = std::move(second);
+            first = std::move(swap_second);
+            second = std::move(swap_first);
+        }
+
+        void manifest_power(human &hmn, std::string power_name)
+        {
+            power pwr{power_name};
+            hmn.own_power = std::make_shared<power>(pwr);
+        }
+
+        void use_power(const human &caster, human &target)
+        {
+            target.influenced_by = caster.own_power;
+        }
+
+        int power_intensity(const human &owner)
+        {
+            return static_cast<int>(owner.own_power.use_count());
+        }
+    }
+
+Note:
+
+    static_cast<int> is used because use_count() returns an implementation-defined signed integer-like count type or size-related type depending on context, while the exercise expects int.
+
+
+============================================================
+10. Declaration vs Definition Reminder
+============================================================
+
+Declaration:
+
+    Tells the compiler that a function exists.
+
+Example:
+
+    void use_power(const human &, human &);
+
+Definition:
+
+    Provides the actual function body.
+
+Example:
+
+    void use_power(const human &caster, human &target)
+    {
+        target.influenced_by = caster.own_power;
+    }
+
+Important C++ rule:
+
+    Declaration and definition must match.
+
+They must match in:
+
+    - function name
+    - return type
+    - parameter types
+    - namespace
+    - member/free-function status
+
+Example mismatch problem:
+
+    Header:
+        void give_new_artifact(human &, const std::string &);
+
+    Source:
+        void give_new_artifact(human &, std::string &);
+
+These are different signatures.
+
+Professional rule:
+
+    Keep header declarations and source definitions exactly consistent.
+
+
+============================================================
+11. Member Function vs Free Function
+============================================================
+
+Member function call style:
+
+    human_object.some_function();
+
+Free function call style:
+
+    some_function(human_object);
+
+In this exercise, functions such as:
+
+    give_new_artifact
+    exchange_artifacts
+    manifest_power
+    use_power
+    power_intensity
+
+are free functions inside namespace troy, not member functions of human.
+
+Why?
+
+The exercise examples call them like this:
+
+    give_new_artifact(erik, "helmet");
+    use_power(caster, target);
+
+not like this:
+
+    erik.give_new_artifact("helmet");
+    caster.use_power(target);
+
+
+============================================================
+12. CMake / Local Project Notes
+============================================================
+
+Local CMakeLists.txt:
+
+    cmake_minimum_required(VERSION 3.20)
+
+    project(smart_pointers)
+
+    set(CMAKE_CXX_STANDARD 20)
+    set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+    add_executable(
+        smart_pointers
+        main.cpp
+        src/power_of_troy.cpp
+    )
+
+    target_include_directories(
+        smart_pointers
+        PRIVATE
+        include
+    )
+
+Meaning:
+
+    main.cpp and src/power_of_troy.cpp are compiled.
+    include/ is visible for #include "power_of_troy.h".
+
+Commands used:
+
+    rm -rf build
+    cmake -S . -B build
+    cmake --build build
+    ./build/smart_pointers
+
+Important:
+
+    rm -rf build creates a clean rebuild.
+    This is useful when header/source mismatch or stale build files might hide problems.
+
+
+============================================================
+13. VBA Comparison
+============================================================
+
+VBA object variable:
+
+    Dim obj As Object
+    Set obj = Nothing
+
+Similar idea to:
+
+    std::unique_ptr<artifact> possession{nullptr};
+
+Both mean:
+
+    There is a variable that can refer to an object.
+    Currently it refers to nothing.
+
+But C++ adds ownership rules:
+
+    unique_ptr -> one owner
+    shared_ptr -> multiple owners
+    nullptr -> no object
+    move -> transfer ownership
+    reset -> release ownership
+
+VBA usually hides lifetime and ownership more than C++.
+
+C++ forces us to design ownership explicitly.
+
+
+============================================================
+14. JavaScript Comparison
+============================================================
+
+JavaScript:
+
+    let a = null;
+    let b = {};
+
+C++:
+
+    std::unique_ptr<artifact> a{};
+    auto b = std::make_unique<artifact>();
+
+Similar idea:
+
+    a -> no object
+    b -> real object exists
+
+But JavaScript object references do not express ownership.
+
+In JavaScript, many variables can point to the same object freely.
+
+In C++, unique_ptr and shared_ptr make ownership explicit:
+
+    unique_ptr -> cannot copy
+    shared_ptr -> can copy ownership
+
+
+============================================================
+15. Common Mistakes to Avoid
+============================================================
+
+Mistake 1:
+
+    Using make_unique when the task wants nullptr.
+
+Wrong mental model:
+
+    "I need a smart pointer, so I must call make_unique."
+
+Correct:
+
+    Smart pointer can exist without an object.
+
+Mistake 2:
+
+    Dereferencing a nullptr.
+
+Dangerous:
+
+    if (!ptr)
+    {
+        ptr->name;
+    }
+
+Correct:
+
+    if (ptr != nullptr)
+    {
+        ptr->name;
+    }
+
+Mistake 3:
+
+    Trying to copy unique_ptr.
+
+Wrong:
+
+    auto b = a;
+
+Correct:
+
+    auto b = std::move(a);
+
+Mistake 4:
+
+    Moving shared_ptr when sharing is intended.
+
+For use_power, this is correct:
+
+    target.influenced_by = caster.own_power;
+
+This copies the shared_ptr.
+
+Do not use:
+
+    target.influenced_by = std::move(caster.own_power);
+
+because that would remove the power from the caster.
+
+Mistake 5:
+
+    Declaring function inside class when exercise expects free function.
+
+If call style is:
+
+    function(object);
+
+then it is usually a free function.
+
+If call style is:
+
+    object.function();
+
+then it is a member function.
+
+Mistake 6:
+
+    Header and source signatures do not match.
+
+Always compare declaration and definition exactly.
+
+
+============================================================
+16. Professional Improvements for Later
+============================================================
+
+Your local version is good for learning because it makes ownership visible.
+
+Later, we can improve:
+
+1. Avoid unnecessary local object copies.
+2. Use std::swap for exchange_artifacts.
+3. Use const std::string& consistently or pass std::string by value when ownership/move is intended.
+4. Remove unnecessary #include <iostream> from headers.
+5. Keep headers minimal.
+6. Match Exercism exact signatures.
+7. Add tests instead of testing only with main.cpp.
+
+Example professional directions:
+
+    hmn.possession = std::make_unique<artifact>(artifact{art_name});
+
+or with constructors:
+
+    struct artifact
+    {
+        std::string name;
+
+        artifact(std::string n)
+            : name{std::move(n)}
+        {
+        }
+    };
+
+But this is extra.
+The important thing now is the ownership model.
+
+
+============================================================
+17. What Was Learned
+============================================================
+
+1. Smart pointers represent ownership, not just addresses.
+2. std::unique_ptr means exclusive ownership.
+3. std::shared_ptr means shared ownership.
+4. nullptr means no object currently exists.
+5. make_unique and make_shared create real heap objects.
+6. unique_ptr cannot be copied.
+7. unique_ptr ownership can be moved.
+8. shared_ptr can be copied to share ownership.
+9. use_count() can show how many shared_ptr owners exist.
+10. Functions that modify original objects need references.
+11. const references are used when reading without modifying.
+12. Free functions and member functions have different call styles.
+13. Header declarations and .cpp definitions must match.
+14. CMake must compile the .cpp file and expose the include folder.
+15. Clean rebuilds help confirm real compile status.
+
+
+============================================================
+18. What Should Be Remembered
+============================================================
+
+Core memory sentence:
+
+    unique_ptr moves ownership.
+    shared_ptr copies ownership.
+    nullptr means no object.
+    make_unique/make_shared create objects.
+
+Ownership decision table:
+
+    Need exactly one owner?
+        use std::unique_ptr
+
+    Need multiple owners?
+        use std::shared_ptr
+
+    Need no object yet?
+        initialize smart pointer as nullptr or {}
+
+    Need to transfer unique ownership?
+        use std::move
+
+    Need to share a power/object?
+        copy the shared_ptr
+
+    Need to inspect but not modify?
+        use const reference
+
+    Need to modify original?
+        use non-const reference
+
+
+============================================================
+19. Final Exercise Summary
+============================================================
+
+Exercise:
+
+    015 — Power of Troy
+
+Main concept:
+
+    Smart Pointers
+
+Completed tasks:
+
+    Task 1 — human struct with smart pointer members
+    Task 2 — give_new_artifact
+    Task 3 — exchange_artifacts
+    Task 4 — manifest_power
+    Task 5 — use_power
+    Task 6 — power_intensity
+
+Most important concept:
+
+    The pointer type expresses ownership rules.
+
+Best mental model:
+
+    std::unique_ptr is like a single ownership contract.
+    std::shared_ptr is like shared responsibility for keeping an object alive.
+    nullptr means no object exists yet.
+    make_unique/make_shared create actual objects.
+
+Common mistake to avoid:
+
+    Do not confuse "smart pointer variable exists" with "object exists".

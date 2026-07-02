@@ -8,8 +8,8 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/cansoy/Desktop/lasagna/main.cpp" "CMakeFiles/lasagna_master.dir/main.cpp.o" "gcc" "CMakeFiles/lasagna_master.dir/main.cpp.o.d"
-  "/home/cansoy/Desktop/lasagna/src/lasagna_master.cpp" "CMakeFiles/lasagna_master.dir/src/lasagna_master.cpp.o" "gcc" "CMakeFiles/lasagna_master.dir/src/lasagna_master.cpp.o.d"
+  "/home/cansoy/Desktop/pointers/main.cpp" "CMakeFiles/smart_pointers.dir/main.cpp.o" "gcc" "CMakeFiles/smart_pointers.dir/main.cpp.o.d"
+  "/home/cansoy/Desktop/pointers/src/power_of_troy.cpp" "CMakeFiles/smart_pointers.dir/src/power_of_troy.cpp.o" "gcc" "CMakeFiles/smart_pointers.dir/src/power_of_troy.cpp.o.d"
   )
 
 # Targets to which this target links which contain Fortran sources.

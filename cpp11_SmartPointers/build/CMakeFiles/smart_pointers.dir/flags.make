@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/cansoy/Desktop/lasagna/include
+CXX_INCLUDES = -I/home/cansoy/Desktop/pointers/include
 
-CXX_FLAGS = -g -std=gnu++20
+CXX_FLAGS = -std=gnu++20
 

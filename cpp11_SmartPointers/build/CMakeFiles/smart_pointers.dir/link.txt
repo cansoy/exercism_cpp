@@ -1,0 +1,1 @@
+/usr/bin/c++ CMakeFiles/smart_pointers.dir/main.cpp.o CMakeFiles/smart_pointers.dir/src/power_of_troy.cpp.o -o smart_pointers 
