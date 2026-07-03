@@ -1,0 +1,547 @@
+021 - Grains — Detailed Notes
+================================
+
+Exercise focus
+--------------
+This exercise looks simple, but it teaches important raw C++ knowledge:
+
+- integer type selection
+- unsigned integer literals
+- std::pow vs integer operations
+- bit shifting with <<
+- off-by-one logic
+- loop boundaries
+- returning after a loop
+- choosing the correct mental model before coding
+
+The problem idea
+----------------
+The chessboard has 64 squares.
+
+The grain count doubles on every square:
+
+square 1 -> 1
+square 2 -> 2
+square 3 -> 4
+square 4 -> 8
+square 5 -> 16
+
+So the pattern is powers of 2.
+
+Mathematical rule:
+
+square n -> 2^(n - 1)
+
+The -1 is important because square numbers start at 1, but exponents / shift positions start at 0.
+
+Example:
+
+square 1 -> 2^0 -> 1
+square 2 -> 2^1 -> 2
+square 3 -> 2^2 -> 4
+square 4 -> 2^3 -> 8
+
+
+1. unsigned long long
+---------------------
+unsigned long long is a large unsigned integer type.
+
+Meaning:
+
+unsigned -> no negative values
+long long -> larger integer storage than normal int
+
+Example:
+
+unsigned long long grains{1};
+
+Why not int?
+
+Because the grain numbers become very large. A normal int is too small for the later squares.
+
+Important idea:
+
+The data type must match the size and meaning of the data.
+
+For Grains:
+
+- negative grain count does not make sense
+- values become very large
+- therefore an unsigned large integer type is appropriate
+
+
+2. ULL literal suffix
+---------------------
+ULL means unsigned long long literal.
+
+Example:
+
+1ULL
+
+This means:
+
+the number 1, but treated as unsigned long long
+
+Compare:
+
+auto a{1};     -> int
+auto b{1U};    -> unsigned int
+auto c{1ULL};  -> unsigned long long
+
+Important:
+
+ULL is not a standalone type name.
+It is a suffix attached to a number literal.
+
+Correct:
+
+unsigned long long value{1ULL};
+
+Incorrect mental model:
+
+ULL by itself is not a variable type.
+
+
+3. std::pow
+-----------
+C++ has std::pow from <cmath>.
+
+Example:
+
+#include <cmath>
+
+std::pow(2, 3); // 8
+
+But std::pow is a general mathematical power function.
+It commonly returns a floating-point value, such as double.
+
+So this:
+
+return std::pow(2, num - 1);
+
+means:
+
+1. calculate 2^(num - 1) as a floating-point value
+2. convert that result into unsigned long long when returning
+
+The math is correct, but the C++ approach is not ideal here.
+
+Explicit version:
+
+return static_cast<unsigned long long>(std::pow(2, num - 1));
+
+This explains the conversion clearly, but it still uses floating-point calculation for an integer problem.
+
+Why this is not best here:
+
+- Grains needs exact integer powers of 2
+- std::pow is more general than necessary
+- it returns floating-point
+- conversion is extra noise
+- integer bit shifting expresses the intent better
+
+
+4. Wrong power confusion
+------------------------
+This was an important correction.
+
+Wrong idea:
+
+pow(num, 2)
+
+This means:
+
+num^2
+
+Examples:
+
+num = 1 -> 1^2 = 1
+num = 2 -> 2^2 = 4
+num = 3 -> 3^2 = 9
+num = 4 -> 4^2 = 16
+
+That is not the Grains pattern.
+
+Another wrong idea:
+
+pow(num - 1, 2)
+
+This means:
+
+(num - 1)^2
+
+Examples:
+
+num = 1 -> 0^2 = 0
+num = 2 -> 1^2 = 1
+num = 3 -> 2^2 = 4
+num = 4 -> 3^2 = 9
+
+Still not the Grains pattern.
+
+Correct mathematical idea:
+
+pow(2, num - 1)
+
+This means:
+
+2^(num - 1)
+
+Examples:
+
+num = 1 -> 2^0 = 1
+num = 2 -> 2^1 = 2
+num = 3 -> 2^2 = 4
+num = 4 -> 2^3 = 8
+
+
+5. Bit shift operator <<
+-----------------------
+The << operator can shift bits to the left.
+
+For powers of 2, this is very useful:
+
+1ULL << 0 -> 1
+1ULL << 1 -> 2
+1ULL << 2 -> 4
+1ULL << 3 -> 8
+1ULL << 4 -> 16
+1ULL << 5 -> 32
+
+Mental model:
+
+left shift by 1 = multiply by 2
+left shift by 2 = multiply by 4
+left shift by 3 = multiply by 8
+
+So:
+
+1ULL << n
+
+is equivalent to:
+
+2^n
+
+when n is the shift amount.
+
+
+6. Why 1ULL << (num - 1)?
+--------------------------
+The square number starts at 1.
+
+But the shift amount starts at 0.
+
+So:
+
+square 1 needs shift 0
+square 2 needs shift 1
+square 3 needs shift 2
+square 4 needs shift 3
+
+Therefore:
+
+square num -> 1ULL << (num - 1)
+
+Examples:
+
+num = 1 -> 1ULL << 0 -> 1
+num = 2 -> 1ULL << 1 -> 2
+num = 3 -> 1ULL << 2 -> 4
+num = 4 -> 1ULL << 3 -> 8
+
+Important memory:
+
+If num means square number:
+
+1ULL << (num - 1)
+
+If num means shift amount:
+
+1ULL << num
+
+
+7. Do not mix mental models
+----------------------------
+There are two valid models.
+
+Model A: square number model
+
+i = 1 to 64
+use:
+
+1ULL << (i - 1)
+
+This matches the problem language directly.
+
+Model B: shift amount model
+
+i = 0 to 63
+use:
+
+1ULL << i
+
+This matches the bit-shift language directly.
+
+Both can work.
+
+The mistake happens when they are mixed.
+
+Wrong mixed example:
+
+i = 1 to 64
+use 1ULL << i
+
+This skips square 1 and goes one shift too far.
+
+Wrong mixed example:
+
+i = 0 to 63
+use 1ULL << (i - 1)
+
+This creates a bad expression when i is 0.
+
+
+8. Loop boundaries
+------------------
+For 64 chessboard squares, we must include square 64.
+
+Square number model:
+
+for (unsigned int i{1}; i <= 64; ++i)
+
+This means:
+
+i = 1, 2, 3, ..., 64
+
+Important:
+
+i < 64 means stop before 64.
+i <= 64 means include 64.
+
+So:
+
+for (unsigned int i{1}; i < 64; ++i)
+
+only covers:
+
+1 through 63
+
+That misses square 64.
+
+Shift amount model:
+
+for (unsigned int i{0}; i < 64; ++i)
+
+This means:
+
+i = 0, 1, 2, ..., 63
+
+That covers 64 shift positions.
+
+
+9. Accumulator variable
+-----------------------
+To calculate a total, we need a variable that keeps the running sum.
+
+Example:
+
+unsigned long long sum_nums{0};
+
+Meaning:
+
+Start total at zero.
+Then add each square's grain count into it.
+
+Pattern:
+
+sum_nums += current_value;
+
+This means:
+
+sum_nums = sum_nums + current_value;
+
+VBA equivalent:
+
+sumNums = sumNums + currentValue
+
+JavaScript equivalent:
+
+sumNums += currentValue;
+
+
+10. return location
+-------------------
+This is a very important loop rule.
+
+Wrong pattern:
+
+for (...) {
+    sum_nums += ...;
+    return sum_nums;
+}
+
+Why wrong?
+
+Because return immediately exits the function.
+
+If return is inside the loop, the loop stops after the first iteration.
+
+Correct mental model:
+
+inside loop  -> repeated work
+after loop   -> final answer
+
+So:
+
+- adding belongs inside the loop
+- returning the final total belongs after the loop
+
+
+11. Function definition semicolon
+---------------------------------
+Normal function definitions do not need a semicolon after the closing brace.
+
+Better:
+
+unsigned long long square(unsigned int num)
+{
+    return 1ULL << (num - 1);
+}
+
+Not needed:
+
+unsigned long long square(unsigned int num)
+{
+    return 1ULL << (num - 1);
+};
+
+A semicolon is required after class/struct definitions, but not after normal function definitions.
+
+Example:
+
+struct Person {
+    int age{};
+}; // semicolon required here
+
+
+12. C++ style note: std::uint64_t
+---------------------------------
+Some C++ code uses:
+
+#include <cstdint>
+
+std::uint64_t
+
+This means:
+
+unsigned 64-bit integer
+
+This is more precise than unsigned long long because it states the exact bit width.
+
+For Grains, std::uint64_t is often a very good choice because the chessboard result is a 64-bit unsigned integer problem.
+
+Example:
+
+std::uint64_t value{1ULL};
+
+However, unsigned long long is also commonly used and usually works for this exercise.
+
+
+13. VBA comparison
+------------------
+In VBA, you might write:
+
+2 ^ (num - 1)
+
+VBA uses ^ for exponentiation.
+
+C++ does not use ^ for exponentiation.
+In C++, ^ is bitwise XOR, not power.
+
+So this is not power in C++:
+
+2 ^ 3
+
+In C++, use either:
+
+std::pow(2, 3)     // general math, floating-point
+1ULL << 3          // integer power of 2
+
+
+14. JavaScript comparison
+-------------------------
+In JavaScript:
+
+Math.pow(2, num - 1)
+
+or:
+
+2 ** (num - 1)
+
+In C++:
+
+std::pow(2, num - 1)
+
+or for this exercise:
+
+1ULL << (num - 1)
+
+
+15. Main takeaways
+------------------
+What was learned:
+
+- unsigned long long stores large non-negative integer values
+- ULL makes an integer literal unsigned long long
+- std::pow returns floating-point and is not ideal for exact integer powers of 2
+- 1ULL << n is an exact integer way to calculate 2^n
+- square numbers start at 1, but shift positions start at 0
+- therefore square num uses 1ULL << (num - 1)
+- loop boundaries must include square 64
+- return inside a loop exits immediately
+- choose one mental model and do not mix it
+
+What should be remembered:
+
+If the problem says square number:
+
+1ULL << (square - 1)
+
+If the loop uses shift positions:
+
+1ULL << i
+
+Common mistake to avoid:
+
+Using pow(num, 2) or pow(num - 1, 2).
+Those calculate squares, not powers of two.
+
+Another common mistake:
+
+Putting return inside the loop.
+
+VBA equivalent:
+
+2 ^ (num - 1)
+
+JavaScript equivalent:
+
+2 ** (num - 1)
+
+C++ preferred version for this exercise:
+
+1ULL << (num - 1)
+
+
+16. Self-check questions
+------------------------
+1. What type is 1ULL?
+2. Why is 1 << 63 dangerous compared with 1ULL << 63?
+3. Why does square 1 use shift 0?
+4. What does 1ULL << 5 return?
+5. What is the difference between i < 64 and i <= 64?
+6. Why should return usually be after the loop when calculating a total?
+7. Why is std::pow not ideal here?
+8. What is wrong with pow(num, 2)?
+9. What is wrong with pow(num - 1, 2)?
+10. When should you use 1ULL << i instead of 1ULL << (i - 1)?
