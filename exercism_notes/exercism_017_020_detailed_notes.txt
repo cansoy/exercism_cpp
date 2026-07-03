@@ -1,0 +1,1137 @@
+EXERCISM C++ DETAILED NOTES — 017 to 020
+Author: Cansoy + ChatGPT
+Scope: 017 Leap, 018 Reverse String, 019 Space Age, 020 Triangle
+Purpose: Reusable C++ learning notes with concepts, mistakes, professional habits, VBA/JS equivalents, and active recall.
+
+================================================================================
+ROADMAP POSITION
+================================================================================
+017 - Leap
+Concepts: Conditional Logic, Modulo Operator
+
+018 - Reverse String
+Concepts: Strings, Iteration, Algorithms
+
+019 - Space Age
+Concepts: Constants, Floating Point Arithmetic
+
+020 - Triangle
+Concepts: Validation Logic, Conditionals
+
+Main learning pattern from this block:
+1. Correct logic order matters.
+2. Use the right operator for the job.
+3. Know when algorithms modify the original object.
+4. Use const correctly.
+5. Keep headers clean.
+6. Validate input before classification.
+7. Choose parameter passing style intentionally.
+
+================================================================================
+017 — LEAP
+================================================================================
+
+Exercise goal:
+Determine whether a year is a leap year.
+
+Gregorian leap-year rule:
+A year is a leap year if:
+- it is divisible by 4,
+- except years divisible by 100 are not leap years,
+- except years divisible by 400 are leap years again.
+
+The human rule:
+Every 4 years is leap,
+but every 100 years cancels it,
+but every 400 years brings it back.
+
+Important examples:
+1997 -> not divisible by 4 -> not leap
+1996 -> divisible by 4, not divisible by 100 -> leap
+1900 -> divisible by 4 and 100, but not 400 -> not leap
+2000 -> divisible by 4, 100, and 400 -> leap
+
+--------------------------------------------------------------------------------
+Core C++ concept: modulo operator
+--------------------------------------------------------------------------------
+
+C++:
+    year % 4 == 0
+
+Meaning:
+    When year is divided by 4, the remainder is 0.
+    So year divides evenly by 4.
+
+Examples:
+    1996 % 4 == 0  -> true
+    1997 % 4 == 1  -> not divisible by 4
+
+Important mistake:
+    year & 100
+
+This is NOT modulo.
+This is bitwise AND.
+For divisibility, use %.
+
+Correct:
+    year % 100 == 0
+
+Wrong for divisibility:
+    year & 100 == 0
+
+VBA equivalent:
+    year Mod 4 = 0
+
+JavaScript equivalent:
+    year % 4 === 0
+
+--------------------------------------------------------------------------------
+Correct logic order
+--------------------------------------------------------------------------------
+
+Clear if/else version:
+
+    bool is_leap_year(int year)
+    {
+        if (year % 400 == 0)
+        {
+            return true;
+        }
+        else if (year % 100 == 0)
+        {
+            return false;
+        }
+        else if (year % 4 == 0)
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+Why this order works:
+- 400 is the most special rule.
+- 100 is the exception rule.
+- 4 is the general rule.
+
+If you check only year % 4 == 0 first, then 1900 incorrectly becomes leap.
+
+--------------------------------------------------------------------------------
+Compact professional version
+--------------------------------------------------------------------------------
+
+    bool is_leap_year(int year)
+    {
+        return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    }
+
+Read in English:
+Leap if:
+    divisible by 4 AND not divisible by 100
+OR
+    divisible by 400
+
+Mental groups:
+    Condition 1: year % 4 == 0 && year % 100 != 0
+    Condition 2: year % 400 == 0
+
+Why this is better than:
+    return year % 4 == 0 || year % 400 == 0;
+
+Because 1900 is divisible by 4, but not a leap year.
+The 100 exception must be included.
+
+--------------------------------------------------------------------------------
+Common mistakes
+--------------------------------------------------------------------------------
+
+Mistake 1:
+    return year % 4;
+
+Problem:
+    If the year is divisible by 4, the remainder is 0.
+    In boolean context, 0 means false.
+
+Mistake 2:
+    return year % 4 == 0 || year % 400 == 0;
+
+Problem:
+    1900 becomes true because it is divisible by 4.
+    But 1900 is not leap.
+
+Mistake 3:
+    Using & instead of %.
+
+Problem:
+    & is bitwise AND, not remainder.
+
+--------------------------------------------------------------------------------
+What was learned
+--------------------------------------------------------------------------------
+- % means remainder/modulo.
+- Divisibility is checked with number % divisor == 0.
+- Logical ordering is important when rules have exceptions.
+- A compact boolean expression can be cleaner after the full logic is understood.
+
+What should be remembered:
+    return (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+
+Common mistake to avoid:
+    Checking year % 4 == 0 alone is not enough.
+
+VBA equivalent:
+    Function IsLeapYear(ByVal year As Long) As Boolean
+        IsLeapYear = (year Mod 4 = 0 And year Mod 100 <> 0) Or (year Mod 400 = 0)
+    End Function
+
+JavaScript equivalent:
+    function isLeapYear(year) {
+        return (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+    }
+
+================================================================================
+018 — REVERSE STRING
+================================================================================
+
+Exercise goal:
+Reverse a string.
+
+Examples:
+    "stressed" -> "desserts"
+    "strops"   -> "sports"
+    "racecar"  -> "racecar"
+
+Core idea:
+A string is a sequence of characters.
+Reversing means rearranging characters from last to first.
+
+--------------------------------------------------------------------------------
+Core C++ concept: std::reverse
+--------------------------------------------------------------------------------
+
+    #include <algorithm>
+    #include <string>
+
+    std::string name{"muhammed_cansoy"};
+    std::reverse(name.begin(), name.end());
+
+Important:
+    std::reverse modifies the original range.
+
+It does NOT create a new string automatically.
+
+Before:
+    name = "muhammed_cansoy"
+
+After:
+    name = "yosnac_demmahum"
+
+--------------------------------------------------------------------------------
+Iterator mental model
+--------------------------------------------------------------------------------
+
+    name.begin() -> iterator to first character
+    name.end()   -> iterator one past the last character
+
+std::reverse receives a range:
+    [begin, end)
+
+This means:
+    start at begin,
+    stop before end.
+
+--------------------------------------------------------------------------------
+If you want to preserve the original
+--------------------------------------------------------------------------------
+
+Make a copy first:
+
+    std::string original{"robot"};
+    std::string reversed{original};
+    std::reverse(reversed.begin(), reversed.end());
+
+Now:
+    original == "robot"
+    reversed == "tobor"
+
+--------------------------------------------------------------------------------
+Function signature possibilities
+--------------------------------------------------------------------------------
+
+Case 1: parameter by value
+
+    std::string reverse_string(std::string input)
+    {
+        std::reverse(input.begin(), input.end());
+        return input;
+    }
+
+Here input is already a copy.
+It is safe to modify input.
+The caller's original string is not changed.
+
+Case 2: parameter by const reference
+
+    std::string reverse_string(const std::string& input)
+    {
+        std::string copy{input};
+        std::reverse(copy.begin(), copy.end());
+        return copy;
+    }
+
+Here input is read-only.
+You cannot reverse input directly because it is const.
+You must create a copy first.
+
+--------------------------------------------------------------------------------
+std::reverse vs JavaScript reverse
+--------------------------------------------------------------------------------
+
+C++:
+    std::reverse(name.begin(), name.end());
+
+JavaScript:
+    const reversed = text.split("").reverse().join("");
+
+Important JavaScript note:
+    Array.prototype.reverse() also mutates the array.
+    Strings are immutable in JavaScript, so you split into an array first.
+
+VBA equivalent:
+    VBA does not have the same iterator model.
+    You usually loop from Len(text) down to 1 and build a new string.
+
+Example VBA idea:
+    For i = Len(text) To 1 Step -1
+        result = result & Mid(text, i, 1)
+    Next i
+
+--------------------------------------------------------------------------------
+What was learned
+--------------------------------------------------------------------------------
+- std::reverse comes from <algorithm>.
+- It works on iterator ranges.
+- It modifies the original object/range.
+- If the original must stay unchanged, make a copy first.
+
+What should be remembered:
+    std::reverse(begin, end) mutates the range.
+
+Common mistake to avoid:
+    Thinking std::reverse automatically returns a new reversed string.
+
+VBA equivalent:
+    Loop backward through characters and build a new string.
+
+JavaScript equivalent:
+    text.split("").reverse().join("")
+
+================================================================================
+019 — SPACE AGE
+================================================================================
+
+Exercise goal:
+Given an age in seconds, calculate age on different planets.
+
+Main concept:
+Each planet has a different orbital period compared with Earth.
+
+Formula:
+    earth_age = seconds / earth_year_seconds
+    planet_age = earth_age / planet_orbital_period
+
+Important exercise contract:
+    1 Earth year = 31,557,600 seconds
+
+Correct C++ constant:
+    constexpr double YEAR_TO_SECOND{31557600.0};
+
+Your first calculation used 365.256 * 24 * 60 * 60.
+That was close astronomically, but Exercism tests expected 31557600.0.
+
+--------------------------------------------------------------------------------
+Core C++ concept: constexpr
+--------------------------------------------------------------------------------
+
+    constexpr double YEAR_TO_SECOND{31557600.0};
+
+Meaning:
+    This value is known at compile time.
+    It is fixed.
+    It should not change while the program runs.
+
+Good use cases:
+    constexpr double YEAR_TO_SECOND{31557600.0};
+    constexpr double MERCURY_ORBITAL_PERIOD{0.2408467};
+    constexpr double MARS_ORBITAL_PERIOD{1.8808158};
+
+Bad use case:
+    constexpr double user_age{input_from_user};
+
+Why bad?
+    User input is not known at compile time.
+
+VBA equivalent:
+    Const YEAR_TO_SECOND As Double = 31557600#
+
+JavaScript equivalent:
+    const YEAR_TO_SECOND = 31557600.0;
+
+C++ is stronger here because constexpr can be compile-time.
+
+--------------------------------------------------------------------------------
+Core C++ concept: const member functions
+--------------------------------------------------------------------------------
+
+    double on_earth() const;
+
+Important:
+    const at the end of a member function means:
+    This function promises not to modify the object.
+
+Example:
+
+    class space_age
+    {
+    private:
+        double second{};
+
+    public:
+        double on_earth() const;
+    };
+
+Inside this function, this is NOT allowed:
+
+    double space_age::on_earth() const
+    {
+        second = 100; // error: cannot modify member in const member function
+        return second / YEAR_TO_SECOND;
+    }
+
+Why this matters:
+- It documents intent.
+- It lets the compiler protect the object.
+- It tells users of the class that this is read-only behavior.
+
+C++ mental model:
+    const after function = read-only member function.
+
+JavaScript equivalent:
+    JavaScript does not enforce this for ordinary class methods.
+    You must rely more on convention.
+
+VBA equivalent:
+    Similar to a method that only reads object state, but C++ compiler enforces it.
+
+--------------------------------------------------------------------------------
+Core C++ concept: anonymous namespace
+--------------------------------------------------------------------------------
+
+    namespace
+    {
+        constexpr double YEAR_TO_SECOND{31557600.0};
+        constexpr double MERCURY_ORBITAL_PERIOD{0.2408467};
+    }
+
+Meaning:
+    These constants are private to this .cpp file.
+
+Why good:
+    They are implementation details.
+    Other files do not need to access them.
+    The public API stays clean.
+
+Public API:
+    space_age.h
+
+Private implementation details:
+    space_age.cpp
+
+--------------------------------------------------------------------------------
+Header cleanup
+--------------------------------------------------------------------------------
+
+Bad header:
+
+    #pragma once
+    #include <iostream>
+
+    namespace space_age
+    {
+        class space_age { ... };
+    }
+
+Problem:
+    The header does not use std::cout or std::cin.
+    <iostream> is unnecessary.
+
+Good header:
+
+    #pragma once
+
+    namespace space_age
+    {
+        class space_age
+        {
+        private:
+            double second{};
+
+        public:
+            explicit space_age(double second) : second{second} {}
+
+            double seconds() const;
+            double on_earth() const;
+            double on_mercury() const;
+            double on_venus() const;
+            double on_mars() const;
+            double on_jupiter() const;
+            double on_saturn() const;
+            double on_uranus() const;
+            double on_neptune() const;
+        };
+    }
+
+Note:
+    explicit is a professional improvement for single-argument constructors.
+    It prevents accidental implicit conversion from double to space_age.
+
+--------------------------------------------------------------------------------
+Cleaner implementation pattern
+--------------------------------------------------------------------------------
+
+Instead of repeating:
+
+    return (second / YEAR_TO_SECOND) / MERCURY_ORBITAL_PERIOD;
+
+Use:
+
+    double space_age::on_earth() const
+    {
+        return second / YEAR_TO_SECOND;
+    }
+
+    double space_age::on_mercury() const
+    {
+        return on_earth() / MERCURY_ORBITAL_PERIOD;
+    }
+
+Why better:
+    It expresses the problem clearly:
+    1. Convert seconds to Earth years.
+    2. Convert Earth years to planet years.
+
+--------------------------------------------------------------------------------
+Recommended implementation
+--------------------------------------------------------------------------------
+
+    #include "space_age.h"
+
+    namespace
+    {
+        constexpr double YEAR_TO_SECOND{31557600.0};
+        constexpr double MERCURY_ORBITAL_PERIOD{0.2408467};
+        constexpr double VENUS_ORBITAL_PERIOD{0.61519726};
+        constexpr double MARS_ORBITAL_PERIOD{1.8808158};
+        constexpr double JUPITER_ORBITAL_PERIOD{11.862615};
+        constexpr double SATURN_ORBITAL_PERIOD{29.447498};
+        constexpr double URANUS_ORBITAL_PERIOD{84.016846};
+        constexpr double NEPTUNE_ORBITAL_PERIOD{164.79132};
+    }
+
+    namespace space_age
+    {
+        double space_age::seconds() const
+        {
+            return second;
+        }
+
+        double space_age::on_earth() const
+        {
+            return second / YEAR_TO_SECOND;
+        }
+
+        double space_age::on_mercury() const
+        {
+            return on_earth() / MERCURY_ORBITAL_PERIOD;
+        }
+
+        double space_age::on_venus() const
+        {
+            return on_earth() / VENUS_ORBITAL_PERIOD;
+        }
+
+        double space_age::on_mars() const
+        {
+            return on_earth() / MARS_ORBITAL_PERIOD;
+        }
+
+        double space_age::on_jupiter() const
+        {
+            return on_earth() / JUPITER_ORBITAL_PERIOD;
+        }
+
+        double space_age::on_saturn() const
+        {
+            return on_earth() / SATURN_ORBITAL_PERIOD;
+        }
+
+        double space_age::on_uranus() const
+        {
+            return on_earth() / URANUS_ORBITAL_PERIOD;
+        }
+
+        double space_age::on_neptune() const
+        {
+            return on_earth() / NEPTUNE_ORBITAL_PERIOD;
+        }
+    }
+
+--------------------------------------------------------------------------------
+What was learned
+--------------------------------------------------------------------------------
+- constexpr is for compile-time constants.
+- const after a member function means it cannot modify the object.
+- Anonymous namespace hides implementation details inside a .cpp file.
+- Headers should include only what they need.
+- Exercise contracts matter: 31557600.0 was expected by the tests.
+
+What should be remembered:
+    double on_earth() const;
+
+means:
+    this function reads the object and does not modify it.
+
+Common mistakes to avoid:
+- Using unnecessary includes in headers.
+- Forgetting const on read-only member functions.
+- Using a close real-world value instead of the exercise's exact expected constant.
+
+VBA equivalent:
+    Const YEAR_TO_SECOND As Double = 31557600#
+
+JavaScript equivalent:
+    const YEAR_TO_SECOND = 31557600.0;
+
+================================================================================
+020 — TRIANGLE
+================================================================================
+
+Exercise goal:
+Classify a triangle as:
+- equilateral
+- isosceles
+- scalene
+
+But only after checking that the sides form a valid triangle.
+
+Important rule:
+    Validate first.
+    Classify second.
+
+--------------------------------------------------------------------------------
+Triangle validity rules
+--------------------------------------------------------------------------------
+
+A valid triangle must satisfy:
+1. Every side must be greater than 0.
+2. No side can be greater than the sum of the other two sides.
+
+Invalid side examples:
+    0, 3, 3
+    0, 0, 0
+    -1, 2, 2
+
+Invalid triangle inequality example:
+    1, 1, 3
+
+Because:
+    1 + 1 < 3
+
+Valid examples:
+    3, 3, 3 -> equilateral
+    3, 3, 4 -> isosceles
+    3, 4, 5 -> scalene
+
+--------------------------------------------------------------------------------
+Validation before classification
+--------------------------------------------------------------------------------
+
+Bad logic:
+    If all sides equal, return equilateral.
+
+Problem:
+    0, 0, 0 has all sides equal but is not a real triangle.
+
+Correct logic:
+
+    if (a <= 0 || b <= 0 || c <= 0)
+    {
+        throw std::domain_error{"invalid triangle"};
+    }
+
+    if (a + b < c || a + c < b || b + c < a)
+    {
+        throw std::domain_error{"invalid triangle"};
+    }
+
+    // only now classify
+
+Professional mental model:
+    Invalid input should not be forced into a valid category.
+
+--------------------------------------------------------------------------------
+Core C++ concept: enum class
+--------------------------------------------------------------------------------
+
+    enum class flavor
+    {
+        equilateral,
+        isosceles,
+        scalene
+    };
+
+Why use enum class?
+    It represents only allowed triangle result types clearly and safely.
+
+Better than strings because strings can have typos:
+    "eqilateral"     // typo
+    "big triangle"   // invalid category
+
+With enum class, the compiler protects the possible values.
+
+Usage:
+    return flavor::equilateral;
+    return flavor::isosceles;
+    return flavor::scalene;
+
+--------------------------------------------------------------------------------
+Core C++ concept: std::domain_error
+--------------------------------------------------------------------------------
+
+    throw std::domain_error{"invalid triangle"};
+
+Meaning:
+    The input values are outside the valid mathematical domain.
+
+Triangle classification domain:
+    side > 0
+    triangle inequality must pass
+
+Examples outside domain:
+    0, 3, 3
+    1, 1, 3
+    -1, 2, 2
+
+These are not equilateral/isosceles/scalene.
+They are invalid input.
+
+Required include:
+    #include <stdexcept>
+
+--------------------------------------------------------------------------------
+Your algorithmic solution: sort + unique + erase
+--------------------------------------------------------------------------------
+
+You used this clever classification idea:
+
+    std::vector<double> edges{a, b, c};
+    std::sort(edges.begin(), edges.end());
+
+    auto new_end = std::unique(edges.begin(), edges.end());
+    edges.erase(new_end, edges.end());
+
+    if (edges.size() == 1)
+        return flavor::equilateral;
+    else if (edges.size() == 2)
+        return flavor::isosceles;
+    else if (edges.size() == 3)
+        return flavor::scalene;
+
+Meaning:
+    1 unique side  -> all sides equal -> equilateral
+    2 unique sides -> two sides equal -> isosceles
+    3 unique sides -> all different -> scalene
+
+--------------------------------------------------------------------------------
+Important std::unique lesson
+--------------------------------------------------------------------------------
+
+std::unique only removes neighboring duplicates.
+It does not search the whole vector for all duplicates.
+
+Example without sort:
+    3, 4, 3
+
+The two 3s are not neighbors.
+std::unique will not remove both correctly for our purpose.
+
+After sort:
+    3, 3, 4
+
+Now duplicates are neighbors.
+std::unique can remove the duplicate 3.
+
+That is why this order matters:
+    sort first
+    unique second
+    erase third
+
+This pattern is often called the erase-remove idiom style, although here the algorithm is unique:
+    auto new_end = std::unique(v.begin(), v.end());
+    v.erase(new_end, v.end());
+
+--------------------------------------------------------------------------------
+Alternative simple classification
+--------------------------------------------------------------------------------
+
+After validation, you can also classify directly:
+
+    if (a == b && b == c)
+    {
+        return flavor::equilateral;
+    }
+
+    if (a == b || a == c || b == c)
+    {
+        return flavor::isosceles;
+    }
+
+    return flavor::scalene;
+
+This version is simpler and avoids vector allocation.
+
+Your sort + unique version is educational because it practices algorithms.
+The direct comparison version is often simpler for only 3 values.
+
+Trade-off:
+    Direct comparison: simpler, faster, very clear for 3 sides.
+    sort + unique: more generic idea, useful for learning algorithms.
+
+--------------------------------------------------------------------------------
+Header cleanup
+--------------------------------------------------------------------------------
+
+Bad header:
+
+    #include <iostream>
+    #include <vector>
+    #include <algorithm>
+
+Problem:
+    The header does not use these directly.
+
+Clean header:
+
+    #pragma once
+
+    namespace triangle
+    {
+        enum class flavor
+        {
+            equilateral,
+            isosceles,
+            scalene
+        };
+
+        flavor kind(double a, double b, double c);
+    }
+
+Implementation includes:
+
+    #include "triangle.h"
+
+    #include <algorithm>
+    #include <stdexcept>
+    #include <vector>
+
+Why:
+    .cpp uses vector, sort, unique, and domain_error.
+    Header only exposes the public API.
+
+--------------------------------------------------------------------------------
+Parameter passing lesson
+--------------------------------------------------------------------------------
+
+Your early version used:
+    flavor kind(const double& a, const double& b, const double& c);
+
+Better for small types:
+    flavor kind(double a, double b, double c);
+
+Why:
+    double is small.
+    Copying it is cheap.
+    Passing by value already protects the original.
+
+Example:
+
+    void test(double x)
+    {
+        x = 999;
+    }
+
+    double value{5};
+    test(value);
+
+    // value is still 5
+
+For small types:
+    int year
+    double a
+    bool active
+    char letter
+
+For big read-only objects:
+    const std::vector<int>& scores
+    const std::string& name
+    const Employee& employee
+
+For big objects you want to modify:
+    std::vector<std::string>& myList
+
+Mental rule:
+    Small value -> pass by value
+    Big object, read only -> const reference
+    Big object, modify original -> non-const reference
+
+--------------------------------------------------------------------------------
+Example from Lasagna Master
+--------------------------------------------------------------------------------
+
+    void addSecretIngredient(std::vector<std::string>& myList,
+                             const std::vector<std::string>& friendList);
+
+myList:
+    non-const reference
+    because we modify it
+
+friendList:
+    const reference
+    because we only read it
+
+Meaning:
+    myList -> input/output parameter
+    friendList -> read-only input parameter
+
+--------------------------------------------------------------------------------
+Recommended Triangle implementation
+--------------------------------------------------------------------------------
+
+    #include "triangle.h"
+
+    #include <stdexcept>
+
+    namespace triangle
+    {
+        flavor kind(double a, double b, double c)
+        {
+            if (a <= 0 || b <= 0 || c <= 0)
+            {
+                throw std::domain_error{"invalid triangle"};
+            }
+
+            if (a + b < c || a + c < b || b + c < a)
+            {
+                throw std::domain_error{"invalid triangle"};
+            }
+
+            if (a == b && b == c)
+            {
+                return flavor::equilateral;
+            }
+
+            if (a == b || a == c || b == c)
+            {
+                return flavor::isosceles;
+            }
+
+            return flavor::scalene;
+        }
+    }
+
+Note:
+    This version does not need vector or algorithm.
+    Your sort + unique version is also valid if includes are correct.
+
+--------------------------------------------------------------------------------
+What was learned
+--------------------------------------------------------------------------------
+- Validate before classify.
+- enum class is safer than strings for a fixed set of results.
+- std::domain_error is appropriate for invalid mathematical input.
+- std::unique only removes neighboring duplicates.
+- sort before unique if you want duplicates grouped.
+- Use double by value for small numeric inputs.
+- Use const reference for bigger read-only objects.
+- Keep headers minimal.
+
+What should be remembered:
+    Validate first, classify second.
+
+Common mistake to avoid:
+    Returning equilateral for 0, 0, 0 because all sides are equal.
+
+VBA equivalent:
+    VBA usually returns strings or constants/enums.
+    Enum can be used for triangle type, but error handling is different.
+
+JavaScript equivalent:
+    JavaScript often returns strings or objects.
+    It does not have C++ enum class safety by default.
+
+================================================================================
+CROSS-EXERCISE PROFESSIONAL LESSONS
+================================================================================
+
+1. Logic order matters
+
+Leap:
+    400 before 100 before 4
+
+Triangle:
+    validation before classification
+
+2. Operators matter
+
+For divisibility:
+    %
+
+Not:
+    &
+
+3. Algorithms often mutate the original object
+
+    std::reverse(begin, end) -> modifies range
+    std::sort(begin, end)    -> modifies range
+
+If original must be preserved:
+    make a copy first
+
+4. const has different locations and meanings
+
+const reference parameter:
+    const std::vector<int>& scores
+    -> read-only borrow
+
+const member function:
+    double on_earth() const;
+    -> function promises not to modify object
+
+constexpr variable:
+    constexpr double YEAR_TO_SECOND{31557600.0};
+    -> compile-time constant
+
+5. Headers should expose API, not implementation weight
+
+Header:
+    declarations, public types, required includes only
+
+CPP:
+    implementation details, private constants, algorithm/includes used internally
+
+6. Parameter passing rule
+
+Small value:
+    int, double, bool, char
+    -> pass by value
+
+Big object read-only:
+    std::string, std::vector, custom class
+    -> pass by const reference
+
+Big object to modify:
+    -> pass by non-const reference
+
+7. Good C++ asks ownership/lifetime/modification questions
+
+For each function parameter ask:
+    Who owns this object?
+    How long does it live?
+    Can it be copied cheaply?
+    Should this function modify it?
+    Can it be null?
+    Is this input valid?
+
+================================================================================
+ACTIVE RECALL QUESTIONS
+================================================================================
+
+017 Leap
+1. Why is 1900 not leap but 2000 leap?
+2. What does year % 4 == 0 mean?
+3. Why is year & 4 wrong for divisibility?
+4. Write the compact leap-year expression from memory.
+
+018 Reverse String
+5. Does std::reverse modify the original string?
+6. What should you do if you want to preserve the original string?
+7. What do begin() and end() represent?
+
+019 Space Age
+8. What does constexpr mean?
+9. Why was 31557600.0 important?
+10. What does double on_earth() const promise?
+11. Why put constants in an anonymous namespace?
+12. Why remove #include <iostream> from the header?
+
+020 Triangle
+13. Why must validation happen before classification?
+14. Why is 0, 0, 0 invalid even though all sides are equal?
+15. What does std::domain_error represent here?
+16. Why use enum class instead of strings?
+17. Why sort before std::unique?
+18. For double parameters, why prefer pass by value?
+19. For vector parameters, why prefer const reference when read-only?
+20. What is the difference between std::vector<T>& and const std::vector<T>&?
+
+================================================================================
+MINI ANSWER KEY
+================================================================================
+
+1. 1900 is divisible by 100 but not 400. 2000 is divisible by 400.
+2. It means the remainder after division by 4 is zero.
+3. & is bitwise AND, not modulo.
+4. (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)
+5. Yes, it modifies the original range.
+6. Make a copy first.
+7. begin() is first element; end() is one past the last element.
+8. Compile-time constant.
+9. Exercism expects 1 Earth year = 31557600 seconds.
+10. It promises not to modify the object.
+11. To keep constants private to the .cpp file.
+12. Header does not use cout/cin; unnecessary include adds dependency weight.
+13. Invalid input must not be classified as a valid triangle type.
+14. Side length 0 is not valid.
+15. Input is outside the valid mathematical domain.
+16. enum class limits values to valid categories and avoids string typos.
+17. std::unique only removes neighboring duplicates.
+18. double is small and cheap to copy; original remains safe.
+19. vector may be expensive to copy; const reference is read-only borrow.
+20. Non-const reference can modify original; const reference cannot.
+
+================================================================================
+FINAL MEMORY COMPRESSION
+================================================================================
+
+017 Leap:
+    % checks remainder.
+    Leap = divisible by 4 and not 100, or divisible by 400.
+
+018 Reverse String:
+    std::reverse mutates the range.
+    Copy first if original must stay unchanged.
+
+019 Space Age:
+    constexpr for fixed constants.
+    const member functions do not modify object.
+    Anonymous namespace hides .cpp constants.
+
+020 Triangle:
+    Validate first, classify second.
+    enum class for safe result categories.
+    std::domain_error for invalid input.
+    sort before unique because unique removes neighboring duplicates.
+
+================================================================================
+END OF NOTES
+================================================================================
