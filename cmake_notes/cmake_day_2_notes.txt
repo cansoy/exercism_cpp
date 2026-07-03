@@ -1,0 +1,625 @@
+# CMake Notes - Target Properties and Compiler Warnings
+
+## 1. Basic workflow
+
+```bash
+cmake -S . -B build
+cmake --build build
+./build/project_output_name
+```
+
+Meaning:
+
+```text
+cmake -S . -B build
+= read CMakeLists.txt from the current folder and generate build files inside build/.
+
+cmake --build build
+= compile and link the project using the generated build folder.
+
+./build/project_output_name
+= run the executable created inside build/.
+```
+
+In VS Code with the CMake extension, the similar workflow is:
+
+```text
+CMake: Select a Kit
+CMake: Configure
+CMake: Build
+CMake: Debug
+```
+
+---
+
+## 2. Basic CMakeLists.txt pattern
+
+```cmake
+cmake_minimum_required(VERSION 3.20)
+
+project(name_of_project)
+
+add_executable(
+    output_target
+    main.cpp
+    src/some.cpp
+)
+
+target_compile_features(
+    output_target
+    PRIVATE
+    cxx_std_20
+)
+
+target_include_directories(
+    output_target
+    PRIVATE
+    include
+)
+```
+
+Core idea:
+
+```text
+add_executable creates a target.
+target_compile_features modifies that target.
+target_include_directories modifies that same target.
+```
+
+---
+
+## 3. Project name vs target name
+
+```cmake
+project(leap_year)
+
+add_executable(
+    leap_year
+    main.cpp
+    src/leap.cpp
+)
+```
+
+Here:
+
+```text
+project name = leap_year
+target name  = leap_year
+```
+
+They can be the same, but they are conceptually different:
+
+```text
+project(...) names the whole project.
+add_executable(...) creates the target CMake will build.
+```
+
+The first name after `add_executable` is the target name.
+
+Usually, for executable targets, the target name also becomes the executable file name.
+
+---
+
+## 4. target_compile_features()
+
+```cmake
+target_compile_features(
+    leap_year
+    PRIVATE
+    cxx_std_20
+)
+```
+
+Meaning:
+
+```text
+For the target named leap_year,
+require C++20 language features.
+```
+
+Breakdown:
+
+```text
+target_compile_features = set required language features for a target
+leap_year = target name created by add_executable
+PRIVATE = only this target needs this requirement
+cxx_std_20 = require C++20
+```
+
+Memory:
+
+```text
+target_compile_features tells CMake which C++ language level/features this target needs.
+```
+
+---
+
+## 5. Why target_compile_features instead of set(CMAKE_CXX_STANDARD 20)?
+
+This works:
+
+```cmake
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+```
+
+Meaning:
+
+```text
+Project-wide, use C++20 and require it.
+```
+
+But a more target-based modern CMake style is:
+
+```cmake
+target_compile_features(
+    leap_year
+    PRIVATE
+    cxx_std_20
+)
+```
+
+Meaning:
+
+```text
+This exact target needs C++20.
+```
+
+For one small project, both can work.
+
+For bigger projects, target-based style is cleaner because every executable or library describes its own requirements.
+
+Good memory:
+
+```text
+Modern CMake thinks in targets.
+```
+
+---
+
+## 6. target_include_directories()
+
+```cmake
+target_include_directories(
+    leap_year
+    PRIVATE
+    include
+)
+```
+
+Meaning:
+
+```text
+For the target named leap_year,
+when compiling its .cpp files,
+also search the include/ folder for header files.
+```
+
+Breakdown:
+
+```text
+leap_year = target name
+PRIVATE = this include path is only needed by this target
+include = header search root folder
+```
+
+Important:
+
+```text
+target_include_directories does not compile headers.
+It tells the compiler where to find headers.
+```
+
+Memory:
+
+```text
+CMake gets the include root.
+#include gives the path from that root.
+```
+
+Example:
+
+```text
+include/
+  leap_year/
+    leap.h
+```
+
+CMake:
+
+```cmake
+target_include_directories(
+    leap_year
+    PRIVATE
+    include
+)
+```
+
+C++:
+
+```cpp
+#include "leap_year/leap.h"
+```
+
+Compiler combines:
+
+```text
+include/ + leap_year/leap.h = include/leap_year/leap.h
+```
+
+---
+
+## 7. target_compile_options()
+
+```cmake
+target_compile_options(
+    leap_year
+    PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+)
+```
+
+Meaning:
+
+```text
+For the target named leap_year,
+when compiling its .cpp files,
+use these compiler warning options.
+```
+
+Breakdown:
+
+```text
+target_compile_options = add compiler options to a target
+leap_year = target name
+PRIVATE = only this target uses these options
+-Wall = enable many common warnings
+-Wextra = enable extra useful warnings
+-Wpedantic = warn about non-standard C++ usage
+```
+
+Important:
+
+```text
+These are not CMake commands.
+They are compiler options passed by CMake to g++.
+```
+
+Build chain:
+
+```text
+CMakeLists.txt
+  ↓
+target_compile_options(...)
+  ↓
+CMake gives these flags to g++
+  ↓
+g++ compiles with more warning checks
+```
+
+---
+
+## 8. Why do warning options start with -W?
+
+In GCC and Clang:
+
+```text
+-W = warning
+```
+
+Examples:
+
+```text
+-Wall
+-Wextra
+-Wpedantic
+-Wunused-variable
+-Wconversion
+```
+
+So:
+
+```text
+-W means this is a warning-related compiler option.
+```
+
+---
+
+## 9. Important: -Wall does not mean all warnings
+
+`-Wall` sounds like all warnings, but it really means:
+
+```text
+many common useful warnings
+```
+
+That is why we also add:
+
+```text
+-Wextra
+```
+
+because `-Wall` alone is not truly every possible warning.
+
+---
+
+## 10. What each warning option does
+
+### -Wall
+
+Enables many common warnings.
+
+Example problems it may catch:
+
+```text
+unused variables
+missing return statements in some cases
+suspicious logic
+```
+
+### -Wextra
+
+Adds extra useful warnings.
+
+Example problems it may catch:
+
+```text
+unused function parameters
+some signed/unsigned comparison issues
+more suspicious code patterns
+```
+
+### -Wpedantic
+
+Warns about non-standard C++ usage.
+
+Meaning:
+
+```text
+Compiler, warn me if I write code that GCC accepts as an extension,
+but that is not standard C++.
+```
+
+This helps keep code portable and standard.
+
+---
+
+## 11. Unused variables vs unused includes
+
+### Unused variable
+
+```cpp
+int main()
+{
+    int age{30};
+}
+```
+
+With warning flags, the compiler will likely warn:
+
+```text
+warning: unused variable 'age' [-Wunused-variable]
+```
+
+So:
+
+```text
+Unused variable = usually warning.
+```
+
+### Unused include/header
+
+```cpp
+#include <vector>
+#include <iostream>
+
+int main()
+{
+    std::cout << "hello\n";
+}
+```
+
+Here `<iostream>` is used, but `<vector>` is not used.
+
+Usually, GCC will not warn just because an include/header is unused.
+
+So:
+
+```text
+Unused #include = usually no warning from g++ alone.
+```
+
+For unused includes, later tools are useful:
+
+```text
+clang-tidy
+include-what-you-use
+```
+
+Not needed yet.
+
+Memory:
+
+```text
+-Wall -Wextra -Wpedantic catch many code problems.
+They usually catch unused variables.
+They usually do not catch unused #include lines.
+```
+
+---
+
+## 12. Full clean CMakeLists.txt example
+
+```cmake
+cmake_minimum_required(VERSION 3.20)
+
+project(leap_year)
+
+add_executable(
+    leap_year
+    main.cpp
+    src/leap.cpp
+)
+
+target_compile_features(
+    leap_year
+    PRIVATE
+    cxx_std_20
+)
+
+target_include_directories(
+    leap_year
+    PRIVATE
+    include
+)
+
+target_compile_options(
+    leap_year
+    PRIVATE
+    -Wall
+    -Wextra
+    -Wpedantic
+)
+```
+
+This means:
+
+```text
+Create the leap_year target.
+
+Compile:
+  main.cpp
+  src/leap.cpp
+
+Require:
+  C++20
+
+Search headers in:
+  include/
+
+Compile with warnings:
+  -Wall
+  -Wextra
+  -Wpedantic
+```
+
+---
+
+## 13. Target-based mental model
+
+The central CMake model:
+
+```text
+Create target.
+Modify target.
+Build target.
+```
+
+Commands:
+
+```cmake
+add_executable(...)
+```
+
+creates a target.
+
+```cmake
+target_compile_features(...)
+```
+
+modifies the target by setting the C++ standard/features.
+
+```cmake
+target_include_directories(...)
+```
+
+modifies the target by adding header search paths.
+
+```cmake
+target_compile_options(...)
+```
+
+modifies the target by adding compiler warning/options.
+
+Memory:
+
+```text
+The target name must match in all target_* commands.
+```
+
+Example:
+
+```cmake
+add_executable(my_app main.cpp)
+
+target_compile_features(my_app PRIVATE cxx_std_20)
+target_include_directories(my_app PRIVATE include)
+target_compile_options(my_app PRIVATE -Wall -Wextra -Wpedantic)
+```
+
+Wrong:
+
+```cmake
+add_executable(my_app main.cpp)
+
+target_compile_options(other_name PRIVATE -Wall)
+```
+
+because `other_name` was not created as a target.
+
+---
+
+## 14. PRIVATE meaning for now
+
+In all of these:
+
+```cmake
+target_compile_features(leap_year PRIVATE cxx_std_20)
+target_include_directories(leap_year PRIVATE include)
+target_compile_options(leap_year PRIVATE -Wall -Wextra -Wpedantic)
+```
+
+For now:
+
+```text
+PRIVATE = this setting is only needed by this target.
+```
+
+We will learn `PUBLIC` and `INTERFACE` later when we create libraries.
+
+---
+
+## 15. Current final memory
+
+```text
+cmake -S . -B build
+= configure/generate build folder.
+
+cmake --build build
+= compile and link.
+
+./build/leap_year
+= run executable.
+
+add_executable
+= create target and list .cpp files.
+
+target_compile_features
+= tell target which C++ standard/features it needs.
+
+target_include_directories
+= tell target where to search for .h files.
+
+target_compile_options
+= tell target which compiler options/warnings to use.
+
+-W means warning option for GCC/Clang.
+
+-Wall does not mean all warnings.
+-Wextra adds more useful warnings.
+-Wpedantic warns about non-standard C++.
+
+Unused variables usually produce warnings.
+Unused includes usually do not produce warnings with g++ alone.
