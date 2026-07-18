@@ -2,6 +2,7 @@ cpp11_SmartPointers/build/
 cpp12_RawPointers/build/
 cpp13_ULL/build/
 cpp14_STL_Start/build/
+cpp15_CMakeNets/build/
 
 # CMake build folders in any exercise
 #**/build/

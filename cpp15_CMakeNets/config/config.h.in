@@ -1,0 +1,17 @@
+#pragma once
+
+#include <cstdint>
+#include <string>
+
+inline const std::string project_name{"@PROJECT_NAME@"};
+inline const std::string project_version{"@PROJECT_VERSION@"};
+
+// clang-format off
+
+inline constexpr std::int32_t project_version_major{@PROJECT_VERSION_MAJOR@};
+
+inline constexpr std::int32_t project_version_minor{@PROJECT_VERSION_MINOR@};
+
+inline constexpr std::int32_t project_version_patch{@PROJECT_VERSION_PATCH@};
+
+// clang-format on
