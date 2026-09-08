@@ -34,4 +34,6 @@ int main()
     std::cout << log_level(log) << std::endl;
     std::cout << message(log) << std::endl;
     std::cout << reformat(log) << std::endl;
+
+    std::cout << "MUHAMMED_CANSOY" << std::endl;
 }
