@@ -36,4 +36,5 @@ int main()
     std::cout << reformat(log) << std::endl;
 
     std::cout << "MUHAMMED_CANSOY" << std::endl;
+    std::cout << "Updated using GitHub Plugin for ChatGPT" << std::endl;
 }
