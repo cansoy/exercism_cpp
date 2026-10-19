@@ -1,5 +1,18 @@
 #include <iostream>
 #include <string>
+#include <vector>
+
+std::string combineThem(std::vector<std::string>& names)
+{
+    std::string result{};
+
+    for (const std::string& item : names)
+    {
+        result += item;
+    }
+
+    return result;
+}
 
 std::string log_level(std::string log)
 {
